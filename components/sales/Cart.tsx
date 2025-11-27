@@ -1,6 +1,6 @@
 "use client";
 
-import { Trash2, ShoppingCart, User, Users, Share2, Tag } from "lucide-react";
+import { Trash2, ShoppingCart, User, Users, Share2, Tag, CreditCard, Banknote, Clock, Gift } from "lucide-react";
 import { useState, useEffect } from "react";
 
 interface CartItem {
@@ -22,6 +22,7 @@ export default function Cart({ items, onRemove, onCheckout, role = "admin" }: Ca
     const [customerType, setCustomerType] = useState<"client" | "partner" | "affiliate">("client");
     const [selectedRoleUser, setSelectedRoleUser] = useState("");
     const [clientName, setClientName] = useState("");
+    const [paymentMethod, setPaymentMethod] = useState<"pix" | "credit_card" | "credit">("pix");
 
     // Admin: Custom Price
     const [isCustomPrice, setIsCustomPrice] = useState(false);
@@ -41,6 +42,7 @@ export default function Cart({ items, onRemove, onCheckout, role = "admin" }: Ca
         setCustomPriceReason("");
         setCouponCode("");
         setDiscountPercent(0);
+        setPaymentMethod("pix");
     }, [role]);
 
     // Coupon Logic
@@ -52,33 +54,53 @@ export default function Cart({ items, onRemove, onCheckout, role = "admin" }: Ca
         }
     }, [couponCode]);
 
+    // Mock Users for Dropdown
+    const PARTNERS = ["João Silva", "Maria Oliveira", "Pedro Santos"];
+    const AFFILIATES_DATA = {
+        "Curitipods": ["Alvaro", "Play"],
+        "Maripods": ["Jumble"]
+    };
+    const AFFILIATES = Object.keys(AFFILIATES_DATA);
+
+    const [benefitType, setBenefitType] = useState<"commission" | "unit">("commission");
+    const [selectedSeller, setSelectedSeller] = useState("");
+
+    useEffect(() => {
+        setSelectedSeller("");
+    }, [selectedRoleUser]);
+
+    // Calculate Totals
     const subtotal = items.reduce((acc, item) => acc + item.price, 0);
 
     let total = subtotal;
     let discountAmount = 0;
 
+    // Admin Custom Price Logic
     if (role === "admin" && isCustomPrice && customPriceValue) {
         total = parseFloat(customPriceValue);
-    } else if (role === "partner" && discountPercent > 0) {
+    }
+    // Affiliate Coupon Logic (Partners use Benefit Type now, no cart discount)
+    else if (role === "affiliate" && discountPercent > 0) {
         discountAmount = (subtotal * discountPercent) / 100;
         total = subtotal - discountAmount;
     }
 
-    // Mock Users for Dropdown
-    const PARTNERS = ["João Silva", "Maria Oliveira", "Pedro Santos"];
-    const AFFILIATES = ["Loja Centro", "Tabacaria X", "Conveniência Y"];
-
     const handleCheckout = () => {
+        const status = paymentMethod === "credit" ? "open" : "paid";
+
         onCheckout({
             items,
-            customerType: role === "partner" ? "client" : customerType,
-            selectedRoleUser,
+            customerType: role === "partner" || role === "affiliate" ? "client" : customerType,
+            selectedRoleUser: role === "affiliate" ? `${selectedRoleUser} - ${selectedSeller}` : selectedRoleUser,
             clientName,
             total,
             isCustomPrice,
             customPriceReason,
-            couponCode: role === "partner" ? couponCode : null,
-            discountAmount
+            // Pass the benefit type for partners
+            benefitType: role === "partner" ? benefitType : null,
+            discountAmount,
+            paymentMethod: paymentMethod === "credit" ? "A Prazo" : paymentMethod === "credit_card" ? "Cartão de Crédito" : "Pix",
+            status
         });
     };
 
@@ -86,7 +108,8 @@ export default function Cart({ items, onRemove, onCheckout, role = "admin" }: Ca
         items.length === 0 ||
         (role === "admin" && isCustomPrice && (!customPriceValue || !customPriceReason)) ||
         !clientName.trim() ||
-        (role === "admin" && customerType !== "client" && !selectedRoleUser);
+        (role === "admin" && customerType !== "client" && !selectedRoleUser) ||
+        (role === "affiliate" && (!selectedRoleUser || !selectedSeller));
 
     return (
         <div className="bg-[#0B1121] border border-white/10 rounded-3xl overflow-hidden flex flex-col h-full">
@@ -103,7 +126,37 @@ export default function Cart({ items, onRemove, onCheckout, role = "admin" }: Ca
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
 
-                {/* Customer Selector (Admin Only) */}
+                {/* Partner Benefit Selector */}
+                {role === "partner" && (
+                    <div className="space-y-3 bg-white/5 p-4 rounded-xl border border-white/10">
+                        <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-2">
+                            <Gift size={14} />
+                            Escolha seu Benefício
+                        </label>
+                        <div className="grid grid-cols-2 gap-2">
+                            <button
+                                onClick={() => setBenefitType("commission")}
+                                className={`p-3 rounded-lg border flex flex-col items-center gap-1 transition-all ${benefitType === "commission"
+                                    ? "bg-emerald-500/20 border-emerald-500/50 text-emerald-400"
+                                    : "bg-black/20 border-transparent text-zinc-500 hover:bg-white/5"
+                                    }`}
+                            >
+                                <span className="font-bold text-sm">Comissão (10%)</span>
+                                <span className="text-[10px] opacity-70">Ganhar R$ {(subtotal * 0.1).toFixed(2)}</span>
+                            </button>
+                            <button
+                                onClick={() => setBenefitType("unit")}
+                                className={`p-3 rounded-lg border flex flex-col items-center gap-1 transition-all ${benefitType === "unit"
+                                    ? "bg-blue-500/20 border-blue-500/50 text-blue-400"
+                                    : "bg-black/20 border-transparent text-zinc-500 hover:bg-white/5"
+                                    }`}
+                            >
+                                <span className="font-bold text-sm">Contar Brinde</span>
+                                <span className="text-[10px] opacity-70">+1 na meta de 10</span>
+                            </button>
+                        </div>
+                    </div>
+                )}
                 {role === "admin" && (
                     <div className="space-y-3">
                         <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Tipo de Venda</label>
@@ -112,8 +165,8 @@ export default function Cart({ items, onRemove, onCheckout, role = "admin" }: Ca
                             <button
                                 onClick={() => setCustomerType("client")}
                                 className={`p-3 rounded-xl border flex flex-col items-center gap-2 transition-all ${customerType === "client"
-                                        ? "bg-blue-600/20 border-blue-600 text-blue-400"
-                                        : "bg-white/5 border-transparent text-zinc-400 hover:bg-white/10"
+                                    ? "bg-blue-600/20 border-blue-600 text-blue-400"
+                                    : "bg-white/5 border-transparent text-zinc-400 hover:bg-white/10"
                                     }`}
                             >
                                 <User size={20} />
@@ -122,8 +175,8 @@ export default function Cart({ items, onRemove, onCheckout, role = "admin" }: Ca
                             <button
                                 onClick={() => setCustomerType("partner")}
                                 className={`p-3 rounded-xl border flex flex-col items-center gap-2 transition-all ${customerType === "partner"
-                                        ? "bg-emerald-600/20 border-emerald-600 text-emerald-400"
-                                        : "bg-white/5 border-transparent text-zinc-400 hover:bg-white/10"
+                                    ? "bg-emerald-600/20 border-emerald-600 text-emerald-400"
+                                    : "bg-white/5 border-transparent text-zinc-400 hover:bg-white/10"
                                     }`}
                             >
                                 <Users size={20} />
@@ -132,8 +185,8 @@ export default function Cart({ items, onRemove, onCheckout, role = "admin" }: Ca
                             <button
                                 onClick={() => setCustomerType("affiliate")}
                                 className={`p-3 rounded-xl border flex flex-col items-center gap-2 transition-all ${customerType === "affiliate"
-                                        ? "bg-purple-600/20 border-purple-600 text-purple-400"
-                                        : "bg-white/5 border-transparent text-zinc-400 hover:bg-white/10"
+                                    ? "bg-purple-600/20 border-purple-600 text-purple-400"
+                                    : "bg-white/5 border-transparent text-zinc-400 hover:bg-white/10"
                                     }`}
                             >
                                 <Share2 size={20} />
@@ -143,18 +196,64 @@ export default function Cart({ items, onRemove, onCheckout, role = "admin" }: Ca
 
                         {/* Dropdown for Partner/Affiliate */}
                         {customerType !== "client" && (
+                            <div className="space-y-2">
+                                <select
+                                    value={selectedRoleUser}
+                                    onChange={(e) => setSelectedRoleUser(e.target.value)}
+                                    className="w-full bg-black/20 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-blue-500 transition-colors animate-in fade-in slide-in-from-top-2"
+                                >
+                                    <option value="">Selecione o {customerType === "partner" ? "Parceiro" : "Afiliado"}...</option>
+                                    {customerType === "partner"
+                                        ? PARTNERS.map(p => <option key={p} value={p}>{p}</option>)
+                                        : AFFILIATES.map(a => <option key={a} value={a}>{a}</option>)
+                                    }
+                                </select>
+
+                                {/* Seller Dropdown for Affiliate */}
+                                {customerType === "affiliate" && selectedRoleUser && (
+                                    <select
+                                        value={selectedSeller}
+                                        onChange={(e) => setSelectedSeller(e.target.value)}
+                                        className="w-full bg-black/20 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-blue-500 transition-colors animate-in fade-in slide-in-from-top-2"
+                                    >
+                                        <option value="">Selecione o Vendedor...</option>
+                                        {AFFILIATES_DATA[selectedRoleUser as keyof typeof AFFILIATES_DATA]?.map(seller => (
+                                            <option key={seller} value={seller}>{seller}</option>
+                                        ))}
+                                    </select>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Affiliate Mode (Not Admin) */}
+                {role === "affiliate" && (
+                    <div className="space-y-3">
+                        <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Identificação do Afiliado</label>
+                        <div className="space-y-2">
                             <select
                                 value={selectedRoleUser}
                                 onChange={(e) => setSelectedRoleUser(e.target.value)}
-                                className="w-full bg-black/20 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-blue-500 transition-colors animate-in fade-in slide-in-from-top-2"
+                                className="w-full bg-black/20 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-blue-500 transition-colors"
                             >
-                                <option value="">Selecione o {customerType === "partner" ? "Parceiro" : "Afiliado"}...</option>
-                                {customerType === "partner"
-                                    ? PARTNERS.map(p => <option key={p} value={p}>{p}</option>)
-                                    : AFFILIATES.map(a => <option key={a} value={a}>{a}</option>)
-                                }
+                                <option value="">Selecione o Afiliado...</option>
+                                {AFFILIATES.map(a => <option key={a} value={a}>{a}</option>)}
                             </select>
-                        )}
+
+                            {selectedRoleUser && (
+                                <select
+                                    value={selectedSeller}
+                                    onChange={(e) => setSelectedSeller(e.target.value)}
+                                    className="w-full bg-black/20 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-blue-500 transition-colors animate-in fade-in slide-in-from-top-2"
+                                >
+                                    <option value="">Selecione o Vendedor...</option>
+                                    {AFFILIATES_DATA[selectedRoleUser as keyof typeof AFFILIATES_DATA]?.map(seller => (
+                                        <option key={seller} value={seller}>{seller}</option>
+                                    ))}
+                                </select>
+                            )}
+                        </div>
                     </div>
                 )}
 
@@ -200,6 +299,43 @@ export default function Cart({ items, onRemove, onCheckout, role = "admin" }: Ca
                     )}
                 </div>
 
+                {/* Payment Method Selector */}
+                <div className="space-y-3 pt-4 border-t border-white/10">
+                    <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Forma de Pagamento</label>
+                    <div className="grid grid-cols-3 gap-2">
+                        <button
+                            onClick={() => setPaymentMethod("pix")}
+                            className={`p-3 rounded-xl border flex flex-col items-center gap-2 transition-all ${paymentMethod === "pix"
+                                ? "bg-emerald-600/20 border-emerald-600 text-emerald-400"
+                                : "bg-white/5 border-transparent text-zinc-400 hover:bg-white/10"
+                                }`}
+                        >
+                            <Banknote size={20} />
+                            <span className="text-xs font-bold">Pix</span>
+                        </button>
+                        <button
+                            onClick={() => setPaymentMethod("credit_card")}
+                            className={`p-3 rounded-xl border flex flex-col items-center gap-2 transition-all ${paymentMethod === "credit_card"
+                                ? "bg-blue-600/20 border-blue-600 text-blue-400"
+                                : "bg-white/5 border-transparent text-zinc-400 hover:bg-white/10"
+                                }`}
+                        >
+                            <CreditCard size={20} />
+                            <span className="text-xs font-bold">Cartão</span>
+                        </button>
+                        <button
+                            onClick={() => setPaymentMethod("credit")}
+                            className={`p-3 rounded-xl border flex flex-col items-center gap-2 transition-all ${paymentMethod === "credit"
+                                ? "bg-amber-600/20 border-amber-600 text-amber-400"
+                                : "bg-white/5 border-transparent text-zinc-400 hover:bg-white/10"
+                                }`}
+                        >
+                            <Clock size={20} />
+                            <span className="text-xs font-bold">A Prazo</span>
+                        </button>
+                    </div>
+                </div>
+
                 {/* Pricing Section */}
                 <div className="space-y-4 pt-4 border-t border-white/10">
 
@@ -208,8 +344,8 @@ export default function Cart({ items, onRemove, onCheckout, role = "admin" }: Ca
                         <span className="text-white font-bold">R$ {subtotal.toFixed(2)}</span>
                     </div>
 
-                    {/* Partner: Coupon Input */}
-                    {role === "partner" && (
+                    {/* Affiliate: Coupon Input */}
+                    {role === "affiliate" && (
                         <div className="bg-white/5 rounded-xl p-4 space-y-2">
                             <div className="flex items-center gap-2 text-purple-400 mb-2">
                                 <Tag size={16} />

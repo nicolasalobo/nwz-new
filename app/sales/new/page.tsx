@@ -8,7 +8,7 @@ import Cart from "@/components/sales/Cart";
 
 export default function NewSalePage() {
     const [cartItems, setCartItems] = useState<any[]>([]);
-    const [role, setRole] = useState<"admin" | "partner">("admin");
+    const [role, setRole] = useState<"admin" | "partner" | "affiliate">("admin");
 
     const addToCart = (product: any, variant: string) => {
         const newItem = {
@@ -50,6 +50,13 @@ export default function NewSalePage() {
                 >
                     Parceiro
                 </button>
+                <button
+                    onClick={() => setRole("affiliate")}
+                    className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${role === "affiliate" ? "bg-purple-600 text-white shadow-lg" : "text-zinc-400 hover:text-white"
+                        }`}
+                >
+                    Afiliado
+                </button>
             </div>
 
             {/* Header */}
@@ -57,7 +64,7 @@ export default function NewSalePage() {
                 <Link href="/dashboard" className="mr-4 text-zinc-400 hover:text-white transition-colors">
                     <ArrowLeft size={24} />
                 </Link>
-                <h1 className="text-lg font-bold">Nova Venda <span className="text-zinc-500 text-sm font-normal ml-2">({role === "admin" ? "Admin" : "Parceiro"})</span></h1>
+                <h1 className="text-lg font-bold">Nova Venda <span className="text-zinc-500 text-sm font-normal ml-2">({role === "admin" ? "Admin" : role === "partner" ? "Parceiro" : "Afiliado"})</span></h1>
             </header>
 
             {/* Content Grid */}

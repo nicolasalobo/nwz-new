@@ -79,7 +79,9 @@ export default function AdminDashboard() {
 
                     <div className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2 px-2 mt-6">Gestão</div>
 
+                    <NavItem icon={<Users size={20} />} label="Usuários" href="/admin/users" />
                     <NavItem icon={<Users size={20} />} label="Parceiros" href="/management/partners" />
+                    <NavItem icon={<Users size={20} />} label="Afiliados" href="/management/affiliates" />
                     <NavItem icon={<BarChart3 size={20} />} label="Relatórios" href="/reports" />
                     <NavItem icon={<FileText size={20} />} label="Histórico" href="/sales/history" />
                     <NavItem icon={<Settings size={20} />} label="Configurações" href="/settings" />

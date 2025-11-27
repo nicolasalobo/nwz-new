@@ -140,7 +140,7 @@ export default function SettingsPage() {
                 </section>
 
                 <div className="text-center text-xs text-zinc-600 pt-8 pb-4">
-                    NWZ System v1.0.0 • Build 2024
+                    Frontend V1.1 - Backend V0.0 • Build 2024
                 </div>
 
             </main>

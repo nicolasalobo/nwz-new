@@ -1,32 +1,256 @@
-import { ArrowLeft } from "lucide-react";
+"use client";
+
+import { useState } from "react";
+import { Users, Search, Filter, MoreVertical, Plus, Gift, DollarSign, ArrowLeft, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 
-export default function PartnersPage() {
-    return (
-        <div className="min-h-screen w-full bg-[#020617] text-white flex flex-col items-center justify-center p-6">
+// Mock Data
+const INITIAL_PARTNERS = [
+    { id: 1, name: "João Silva", email: "joao@email.com", commissionBalance: 1250.00, unitProgress: 7, totalSales: 45, status: "active" },
+    { id: 2, name: "Maria Oliveira", email: "maria@email.com", commissionBalance: 320.50, unitProgress: 3, totalSales: 13, status: "active" },
+    { id: 3, name: "Pedro Santos", email: "pedro@email.com", commissionBalance: 0.00, unitProgress: 9, totalSales: 29, status: "inactive" },
+];
 
-            <div className="max-w-md w-full text-center space-y-6">
-                <div className="w-20 h-20 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <span className="text-4xl">👥</span>
+const AVAILABLE_USERS = [
+    { id: 101, name: "Carlos Souza", email: "carlos@email.com" },
+    { id: 102, name: "Ana Lima", email: "ana@email.com" },
+    { id: 103, name: "Roberto Costa", email: "roberto@email.com" },
+];
+
+export default function PartnersManagementPage() {
+    const [partners, setPartners] = useState(INITIAL_PARTNERS);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
+    const [selectedUserToLink, setSelectedUserToLink] = useState("");
+
+    const filteredPartners = partners.filter(partner =>
+        partner.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        partner.email.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const handleLinkUser = () => {
+        if (!selectedUserToLink) return;
+
+        const user = AVAILABLE_USERS.find(u => u.id.toString() === selectedUserToLink);
+        if (user) {
+            const newPartner = {
+                id: partners.length + 1,
+                name: user.name,
+                email: user.email,
+                commissionBalance: 0,
+                unitProgress: 0,
+                totalSales: 0,
+                status: "active"
+            };
+            setPartners([...partners, newPartner]);
+            setIsLinkModalOpen(false);
+            setSelectedUserToLink("");
+        }
+    };
+
+    return (
+        <div className="min-h-screen bg-[#020617] text-white p-6 pb-24 md:p-8">
+            <div className="max-w-7xl mx-auto space-y-8 animate-fade-in">
+                {/* Header */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                    <div>
+                        <Link href="/dashboard" className="inline-flex items-center text-zinc-400 hover:text-white mb-2 transition-colors">
+                            <ArrowLeft size={16} className="mr-2" />
+                            Voltar ao Dashboard
+                        </Link>
+                        <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-zinc-400 bg-clip-text text-transparent">
+                            Gestão de Parceiros
+                        </h1>
+                        <p className="text-zinc-400">Gerencie seus parceiros, comissões e metas.</p>
+                    </div>
+                    <button
+                        onClick={() => setIsLinkModalOpen(true)}
+                        className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-3 rounded-xl font-medium transition-all shadow-lg shadow-blue-500/20"
+                    >
+                        <Plus size={20} />
+                        Vincular Parceiro
+                    </button>
                 </div>
 
-                <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-400">
-                    Gestão de Parceiros
-                </h1>
+                {/* Stats Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                    <div className="bg-white/5 border border-white/5 rounded-2xl p-6">
+                        <div className="flex justify-between items-start mb-4">
+                            <div className="p-3 rounded-xl bg-blue-500/10 text-blue-400">
+                                <Users size={24} />
+                            </div>
+                        </div>
+                        <h3 className="text-2xl font-bold text-white">{partners.length}</h3>
+                        <p className="text-zinc-400 text-sm">Parceiros Ativos</p>
+                    </div>
+                    <div className="bg-white/5 border border-white/5 rounded-2xl p-6">
+                        <div className="flex justify-between items-start mb-4">
+                            <div className="p-3 rounded-xl bg-emerald-500/10 text-emerald-400">
+                                <DollarSign size={24} />
+                            </div>
+                        </div>
+                        <h3 className="text-2xl font-bold text-white">
+                            R$ {partners.reduce((acc, p) => acc + p.commissionBalance, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </h3>
+                        <p className="text-zinc-400 text-sm">Comissões a Pagar</p>
+                    </div>
+                    <div className="bg-white/5 border border-white/5 rounded-2xl p-6">
+                        <div className="flex justify-between items-start mb-4">
+                            <div className="p-3 rounded-xl bg-purple-500/10 text-purple-400">
+                                <Gift size={24} />
+                            </div>
+                        </div>
+                        <h3 className="text-2xl font-bold text-white">
+                            {partners.filter(p => p.unitProgress >= 9).length}
+                        </h3>
+                        <p className="text-zinc-400 text-sm">Próximos do Brinde</p>
+                    </div>
+                </div>
 
-                <p className="text-zinc-400">
-                    Aqui você poderá gerenciar sua equipe de parceiros e vendedores.
-                </p>
+                {/* Filters */}
+                <div className="flex flex-col md:flex-row gap-4 mb-6">
+                    <div className="flex-1 relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={20} />
+                        <input
+                            type="text"
+                            placeholder="Buscar parceiro..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-white focus:outline-none focus:border-blue-500 transition-colors"
+                        />
+                    </div>
+                    <button className="flex items-center gap-2 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-zinc-300 hover:bg-white/10 transition-colors">
+                        <Filter size={20} />
+                        Filtros
+                    </button>
+                </div>
 
-                <Link
-                    href="/dashboard"
-                    className="inline-flex items-center gap-2 text-zinc-400 hover:text-white transition-colors mt-8"
-                >
-                    <ArrowLeft size={20} />
-                    <span>Voltar ao Painel</span>
-                </Link>
+                {/* Partners List */}
+                <div className="bg-white/5 border border-white/5 rounded-2xl overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="border-b border-white/10 text-zinc-400 text-xs uppercase tracking-wider">
+                                    <th className="p-4 font-medium">Parceiro</th>
+                                    <th className="p-4 font-medium">Saldo (R$)</th>
+                                    <th className="p-4 font-medium">Meta (Brinde)</th>
+                                    <th className="p-4 font-medium">Total Vendas</th>
+                                    <th className="p-4 font-medium">Status</th>
+                                    <th className="p-4 font-medium text-right">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-white/5">
+                                {filteredPartners.map((partner) => (
+                                    <tr key={partner.id} className="hover:bg-white/5 transition-colors group">
+                                        <td className="p-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold">
+                                                    {partner.name.charAt(0)}
+                                                </div>
+                                                <div>
+                                                    <p className="font-medium text-white">{partner.name}</p>
+                                                    <p className="text-xs text-zinc-400">{partner.email}</p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="p-4">
+                                            <div className="flex items-center gap-2 text-emerald-400 font-medium">
+                                                <DollarSign size={16} />
+                                                R$ {partner.commissionBalance.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                            </div>
+                                        </td>
+                                        <td className="p-4">
+                                            <div className="w-32">
+                                                <div className="flex justify-between text-xs mb-1">
+                                                    <span className="text-blue-400 font-bold">{partner.unitProgress}/10</span>
+                                                </div>
+                                                <div className="w-full h-2 bg-black/40 rounded-full overflow-hidden">
+                                                    <div
+                                                        className="h-full bg-blue-500 rounded-full transition-all duration-500"
+                                                        style={{ width: `${(partner.unitProgress / 10) * 100}%` }}
+                                                    ></div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="p-4 text-zinc-300">
+                                            {partner.totalSales} vendas
+                                        </td>
+                                        <td className="p-4">
+                                            <span className={`px-2 py-1 rounded-full text-xs font-medium border ${partner.status === 'active'
+                                                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                                                : 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20'
+                                                }`}>
+                                                {partner.status === 'active' ? 'Ativo' : 'Inativo'}
+                                            </span>
+                                        </td>
+                                        <td className="p-4 text-right">
+                                            <button className="p-2 hover:bg-white/10 rounded-lg text-zinc-400 hover:text-white transition-colors">
+                                                <MoreVertical size={18} />
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                    {filteredPartners.length === 0 && (
+                        <div className="p-8 text-center text-zinc-500">
+                            Nenhum parceiro encontrado.
+                        </div>
+                    )}
+                </div>
+
+                {/* Link User Modal */}
+                {isLinkModalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
+                        <div className="bg-[#18181B] border border-white/10 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-in zoom-in-95">
+                            <div className="p-6 border-b border-white/10 flex justify-between items-center">
+                                <h2 className="text-xl font-bold text-white">Vincular Novo Parceiro</h2>
+                                <button
+                                    onClick={() => setIsLinkModalOpen(false)}
+                                    className="text-zinc-400 hover:text-white transition-colors"
+                                >
+                                    <ArrowLeft size={20} className="rotate-180" />
+                                </button>
+                            </div>
+                            <div className="p-6 space-y-4">
+                                <p className="text-zinc-400 text-sm">
+                                    Selecione um usuário existente para torná-lo um parceiro oficial.
+                                </p>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Usuário</label>
+                                    <select
+                                        value={selectedUserToLink}
+                                        onChange={(e) => setSelectedUserToLink(e.target.value)}
+                                        className="w-full bg-black/20 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-blue-500 transition-colors"
+                                    >
+                                        <option value="">Selecione um usuário...</option>
+                                        {AVAILABLE_USERS.map(user => (
+                                            <option key={user.id} value={user.id}>{user.name} ({user.email})</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+                            <div className="p-6 border-t border-white/10 bg-white/5 flex justify-end gap-3">
+                                <button
+                                    onClick={() => setIsLinkModalOpen(false)}
+                                    className="px-4 py-2 rounded-lg text-zinc-400 hover:text-white hover:bg-white/5 transition-colors"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    onClick={handleLinkUser}
+                                    disabled={!selectedUserToLink}
+                                    className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                                >
+                                    <CheckCircle2 size={18} />
+                                    Vincular
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
-
         </div>
     );
 }
