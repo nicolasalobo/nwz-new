@@ -1,56 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowLeft, Search, Plus, User, Phone, MoreVertical, Edit, Trash2, AlertCircle } from "lucide-react";
+import { ArrowLeft, Search, Plus, User, Phone, MoreVertical, Edit, Trash2, AlertCircle, ShoppingBag, Gift, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import ClientModal from "@/components/clients/ClientModal";
 
-// Mock Data
-const INITIAL_CLIENTS = [
-    {
-        id: "1",
-        name: "Carlos Eduardo",
-        phone: "(11) 99999-1234",
-        email: "carlos@email.com",
-        notes: "Cliente fiel, sempre compra Pods.",
-        totalDebt: 150.00,
-        totalPurchases: 1250.00,
-        status: "active" as const
-    },
-    {
-        id: "2",
-        name: "Ana Clara",
-        phone: "(11) 98888-5678",
-        email: "ana@email.com",
-        notes: "",
-        totalDebt: 0,
-        totalPurchases: 450.00,
-        status: "active" as const
-    },
-    {
-        id: "3",
-        name: "Roberto Souza",
-        phone: "(11) 97777-4321",
-        email: "",
-        notes: "Atrasou pagamento mês passado.",
-        totalDebt: 580.00,
-        totalPurchases: 2100.00,
-        status: "blocked" as const
-    },
-    {
-        id: "4",
-        name: "Mariana Lima",
-        phone: "(11) 96666-8765",
-        email: "mari@email.com",
-        notes: "",
-        totalDebt: 0,
-        totalPurchases: 85.00,
-        status: "active" as const
-    },
-];
+import { CLIENTS } from "@/app/data/mock";
 
 export default function ClientsPage() {
-    const [clients, setClients] = useState(INITIAL_CLIENTS);
+    const [clients, setClients] = useState(CLIENTS);
     const [searchTerm, setSearchTerm] = useState("");
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingClient, setEditingClient] = useState<any>(null);
@@ -65,7 +23,9 @@ export default function ClientsPage() {
                 id: Math.random().toString(36).substr(2, 9),
                 ...clientData,
                 totalDebt: 0,
-                totalPurchases: 0
+                totalPurchases: 0,
+                purchaseCount: 0,
+                totalUnits: 0
             };
             setClients([...clients, newClient]);
         }
@@ -76,6 +36,17 @@ export default function ClientsPage() {
     const handleDeleteClient = (id: string) => {
         if (confirm("Tem certeza que deseja excluir este cliente?")) {
             setClients(clients.filter(c => c.id !== id));
+        }
+    };
+
+    const handleRedeemReward = (clientId: string) => {
+        if (confirm("Confirmar retirada de brinde? Isso descontará 10 unidades do saldo do cliente.")) {
+            setClients(clients.map(c => {
+                if (c.id === clientId && c.totalUnits >= 10) {
+                    return { ...c, totalUnits: c.totalUnits - 10 };
+                }
+                return c;
+            }));
         }
     };
 
@@ -103,7 +74,7 @@ export default function ClientsPage() {
                     <Link href="/dashboard" className="p-2 text-zinc-400 hover:text-white transition-colors rounded-lg hover:bg-white/5">
                         <ArrowLeft size={20} />
                     </Link>
-                    <h1 className="text-xl font-bold text-white">Clientes</h1>
+                    <h1 className="text-xl font-bold text-white">Clientes & Fidelidade</h1>
                 </div>
                 <button
                     onClick={openAddModal}
@@ -132,11 +103,10 @@ export default function ClientsPage() {
                 {/* Clients List */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {filteredClients.map((client) => (
-                        <div key={client.id} className="bg-white/5 border border-white/5 rounded-2xl p-5 hover:border-white/10 transition-all group relative overflow-hidden">
+                        <div key={client.id} className="bg-white/5 border border-white/5 rounded-2xl p-5 hover:border-white/10 transition-all group relative overflow-hidden flex flex-col">
 
                             {/* Status Stripe */}
-                            <div className={`absolute left-0 top-0 bottom-0 w-1 ${client.status === 'blocked' ? 'bg-red-500' :
-                                    client.totalDebt > 0 ? 'bg-amber-500' : 'bg-emerald-500'
+                            <div className={`absolute left-0 top-0 bottom-0 w-1 ${client.totalDebt > 0 || client.status === 'blocked' ? 'bg-red-500' : 'bg-emerald-500'
                                 }`} />
 
                             <div className="flex justify-between items-start mb-4 pl-3">
@@ -168,23 +138,74 @@ export default function ClientsPage() {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4 pl-3">
-                                <div className="bg-black/20 rounded-lg p-3">
-                                    <span className="text-xs text-zinc-500 block mb-1">Total Comprado</span>
+                            {/* Loyalty Stats */}
+                            <div className="pl-3 mb-4 flex gap-2">
+                                <div className="flex-1 bg-black/20 rounded-lg p-2 flex items-center gap-2">
+                                    <div className="p-1.5 bg-blue-500/10 rounded text-blue-400">
+                                        <ShoppingBag size={14} />
+                                    </div>
+                                    <div>
+                                        <span className="text-[10px] text-zinc-500 block uppercase font-bold">Compras</span>
+                                        <span className="text-sm font-bold text-white">{client.purchaseCount || 0}</span>
+                                    </div>
+                                </div>
+                                <div className="flex-1 bg-black/20 rounded-lg p-2 flex items-center gap-2">
+                                    <div className="p-1.5 bg-purple-500/10 rounded text-purple-400">
+                                        <Gift size={14} />
+                                    </div>
+                                    <div>
+                                        <span className="text-[10px] text-zinc-500 block uppercase font-bold">Unidades</span>
+                                        <span className="text-sm font-bold text-white">{client.totalUnits || 0}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Reward Progress */}
+                            <div className="pl-3 mb-4">
+                                <div className="flex justify-between text-xs mb-1">
+                                    <span className="text-zinc-500">Próximo Brinde</span>
+                                    <span className={client.totalUnits >= 10 ? "text-emerald-400 font-bold" : "text-zinc-400"}>
+                                        {client.totalUnits >= 10 ? "Disponível!" : `${client.totalUnits}/10`}
+                                    </span>
+                                </div>
+                                <div className="w-full h-2 bg-black/40 rounded-full overflow-hidden">
+                                    <div
+                                        className={`h-full rounded-full transition-all duration-500 ${client.totalUnits >= 10 ? 'bg-emerald-500 animate-pulse' : 'bg-purple-600'}`}
+                                        style={{ width: `${Math.min((client.totalUnits / 10) * 100, 100)}%` }}
+                                    ></div>
+                                </div>
+                            </div>
+
+                            {/* Reward Button */}
+                            {client.totalUnits >= 10 && (
+                                <div className="pl-3 mb-4">
+                                    <button
+                                        onClick={() => handleRedeemReward(client.id)}
+                                        className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-bold text-xs uppercase tracking-wider transition-all shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2"
+                                    >
+                                        <Gift size={16} />
+                                        Retirar Brinde (-10 Unid)
+                                    </button>
+                                </div>
+                            )}
+
+                            <div className="mt-auto grid grid-cols-2 gap-4 pl-3 pt-4 border-t border-white/5">
+                                <div>
+                                    <span className="text-xs text-zinc-500 block mb-1">Total Gasto</span>
                                     <span className="text-sm font-bold text-white">R$ {client.totalPurchases.toFixed(2)}</span>
                                 </div>
-                                <div className={`bg-black/20 rounded-lg p-3 border ${client.totalDebt > 0 ? 'border-amber-500/30' : 'border-transparent'}`}>
+                                <div>
                                     <span className="text-xs text-zinc-500 block mb-1 flex items-center gap-1">
                                         Devendo
-                                        {client.totalDebt > 0 && <AlertCircle size={10} className="text-amber-500" />}
+                                        {client.totalDebt > 0 && <AlertCircle size={10} className="text-red-500" />}
                                     </span>
-                                    <span className={`text-sm font-bold ${client.totalDebt > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>
+                                    <span className={`text-sm font-bold ${client.totalDebt > 0 ? 'text-red-400' : 'text-emerald-400'}`}>
                                         R$ {client.totalDebt.toFixed(2)}
                                     </span>
                                 </div>
                             </div>
 
-                            {client.status === 'blocked' && (
+                            {(client.status === 'blocked' || client.totalDebt > 0) && (
                                 <div className="mt-4 pl-3">
                                     <span className="inline-flex items-center gap-1 px-2 py-1 rounded bg-red-500/10 text-red-400 text-[10px] font-bold uppercase border border-red-500/20">
                                         <AlertCircle size={10} />

@@ -18,11 +18,14 @@ interface CartProps {
     role?: "admin" | "partner" | "affiliate";
 }
 
+import { CLIENTS } from "@/app/data/mock";
+
 export default function Cart({ items, onRemove, onCheckout, role = "admin" }: CartProps) {
     const [customerType, setCustomerType] = useState<"client" | "partner" | "affiliate">("client");
     const [selectedRoleUser, setSelectedRoleUser] = useState("");
     const [clientName, setClientName] = useState("");
     const [paymentMethod, setPaymentMethod] = useState<"pix" | "credit_card" | "credit">("pix");
+    const [isNewClient, setIsNewClient] = useState(false);
 
     // Admin: Custom Price
     const [isCustomPrice, setIsCustomPrice] = useState(false);
@@ -43,6 +46,8 @@ export default function Cart({ items, onRemove, onCheckout, role = "admin" }: Ca
         setCouponCode("");
         setDiscountPercent(0);
         setPaymentMethod("pix");
+        setIsNewClient(false);
+        setClientName("");
     }, [role]);
 
     // Coupon Logic
@@ -104,10 +109,13 @@ export default function Cart({ items, onRemove, onCheckout, role = "admin" }: Ca
         });
     };
 
+    const selectedClientDebt = !isNewClient ? (CLIENTS.find(c => c.name === clientName)?.totalDebt || 0) : 0;
+
     const isCheckoutDisabled =
         items.length === 0 ||
         (role === "admin" && isCustomPrice && (!customPriceValue || !customPriceReason)) ||
         !clientName.trim() ||
+        selectedClientDebt > 0 || // Block if debt exists (only for existing clients)
         (role === "admin" && customerType !== "client" && !selectedRoleUser) ||
         (role === "affiliate" && (!selectedRoleUser || !selectedSeller));
 
@@ -257,16 +265,70 @@ export default function Cart({ items, onRemove, onCheckout, role = "admin" }: Ca
                     </div>
                 )}
 
-                {/* Client Name Input (Always Visible) */}
+                {/* Client Selection (Always Visible) */}
                 <div className={role === "admin" ? "pt-2" : ""}>
-                    <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2 block">Nome do Cliente Final</label>
-                    <input
-                        type="text"
-                        value={clientName}
-                        onChange={(e) => setClientName(e.target.value)}
-                        placeholder="Nome do Cliente"
-                        className="w-full bg-black/20 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-blue-500 transition-colors placeholder:text-zinc-600"
-                    />
+                    <div className="flex items-center justify-between mb-2">
+                        <label className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Cliente Final</label>
+                        <button
+                            onClick={() => {
+                                setIsNewClient(!isNewClient);
+                                setClientName("");
+                            }}
+                            className="text-xs font-bold text-blue-400 hover:text-blue-300 transition-colors"
+                        >
+                            {isNewClient ? "Selecionar Existente" : "+ Novo Cliente"}
+                        </button>
+                    </div>
+
+                    <div className="space-y-2">
+                        {isNewClient ? (
+                            <input
+                                type="text"
+                                value={clientName}
+                                onChange={(e) => setClientName(e.target.value)}
+                                placeholder="Nome do Novo Cliente"
+                                className="w-full bg-black/20 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-blue-500 transition-colors placeholder:text-zinc-600 animate-in fade-in"
+                                autoFocus
+                            />
+                        ) : (
+                            <select
+                                value={clientName}
+                                onChange={(e) => {
+                                    const name = e.target.value;
+                                    setClientName(name);
+                                    // Check debt
+                                    const client = CLIENTS.find(c => c.name === name);
+                                    if (client && client.totalDebt > 0) {
+                                        // Logic handled in render for blocking
+                                    }
+                                }}
+                                className={`w-full bg-black/20 border rounded-xl p-3 text-white focus:outline-none transition-colors ${CLIENTS.find(c => c.name === clientName)?.totalDebt ? 'border-red-500/50' : 'border-white/10 focus:border-blue-500'
+                                    }`}
+                            >
+                                <option value="">Selecione o Cliente...</option>
+                                {CLIENTS.map(client => (
+                                    <option key={client.id} value={client.name}>
+                                        {client.name} {client.totalDebt > 0 ? `(Dívida: R$ ${client.totalDebt.toFixed(2)})` : ""}
+                                    </option>
+                                ))}
+                            </select>
+                        )}
+
+                        {/* Debt Warning (Only for Existing Clients) */}
+                        {!isNewClient && CLIENTS.find(c => c.name === clientName)?.totalDebt ? (
+                            <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 flex items-center gap-3 animate-in slide-in-from-top-2">
+                                <div className="p-2 bg-red-500/20 rounded-full text-red-400">
+                                    <Banknote size={16} />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-bold text-red-400">Venda Bloqueada</p>
+                                    <p className="text-xs text-red-300/80">
+                                        Cliente possui débitos pendentes de R$ {CLIENTS.find(c => c.name === clientName)?.totalDebt.toFixed(2)}.
+                                    </p>
+                                </div>
+                            </div>
+                        ) : null}
+                    </div>
                 </div>
 
                 {/* Items List */}

@@ -9,6 +9,8 @@ interface Client {
     notes: string;
     totalDebt: number;
     totalPurchases: number;
+    purchaseCount: number;
+    totalUnits: number;
     status: "active" | "blocked";
 }
 
@@ -25,6 +27,8 @@ export default function ClientModal({ isOpen, onClose, onSave, client }: ClientM
         phone: "",
         email: "",
         notes: "",
+        purchaseCount: 0,
+        totalUnits: 0,
         status: "active" as "active" | "blocked"
     });
 
@@ -35,6 +39,8 @@ export default function ClientModal({ isOpen, onClose, onSave, client }: ClientM
                 phone: client.phone,
                 email: client.email,
                 notes: client.notes,
+                purchaseCount: client.purchaseCount || 0,
+                totalUnits: client.totalUnits || 0,
                 status: client.status
             });
         } else {
@@ -43,6 +49,8 @@ export default function ClientModal({ isOpen, onClose, onSave, client }: ClientM
                 phone: "",
                 email: "",
                 notes: "",
+                purchaseCount: 0,
+                totalUnits: 0,
                 status: "active"
             });
         }
@@ -119,6 +127,28 @@ export default function ClientModal({ isOpen, onClose, onSave, client }: ClientM
                         </div>
                     </div>
 
+                    {/* Loyalty Stats (Manual Adjustment) */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                            <label className="text-xs font-bold text-zinc-500 uppercase">Nº Compras</label>
+                            <input
+                                type="number"
+                                value={formData.purchaseCount}
+                                onChange={(e) => setFormData({ ...formData, purchaseCount: parseInt(e.target.value) || 0 })}
+                                className="w-full bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 transition-colors"
+                            />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-xs font-bold text-zinc-500 uppercase">Total Unidades</label>
+                            <input
+                                type="number"
+                                value={formData.totalUnits}
+                                onChange={(e) => setFormData({ ...formData, totalUnits: parseInt(e.target.value) || 0 })}
+                                className="w-full bg-black/20 border border-white/10 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-blue-500 transition-colors"
+                            />
+                        </div>
+                    </div>
+
                     {/* Notes */}
                     <div className="space-y-1">
                         <label className="text-xs font-bold text-zinc-500 uppercase">Observações</label>
@@ -140,8 +170,8 @@ export default function ClientModal({ isOpen, onClose, onSave, client }: ClientM
                             type="button"
                             onClick={() => setFormData({ ...formData, status: formData.status === "active" ? "blocked" : "active" })}
                             className={`px-3 py-1 rounded-full text-xs font-bold transition-all ${formData.status === "active"
-                                    ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                                    : "bg-red-500/10 text-red-400 border border-red-500/20"
+                                ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                                : "bg-red-500/10 text-red-400 border border-red-500/20"
                                 }`}
                         >
                             {formData.status === "active" ? "ATIVO" : "BLOQUEADO"}
