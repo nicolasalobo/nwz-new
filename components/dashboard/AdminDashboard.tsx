@@ -130,9 +130,9 @@ export default function AdminDashboard() {
                 </header>
 
                 {/* Content Area */}
-                <main className="flex-1 overflow-y-auto p-6">
+                <main className="flex-1 overflow-y-auto p-6 pb-24">
                     {/* This is where the specific dashboard widgets will go */}
-                    <div className="w-full h-full flex flex-col items-center justify-start pt-12 text-zinc-500 space-y-8">
+                    <div className="w-full flex flex-col items-center justify-start pt-12 text-zinc-500 space-y-8">
 
                         <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-4 px-4">
                             <NewSaleButton className="w-full" />

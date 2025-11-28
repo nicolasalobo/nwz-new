@@ -1,8 +1,24 @@
+"use client";
+
 import Image from "next/image";
 import { ArrowLeft, Mail, Lock, LogIn, User } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 export default function Login() {
+    const router = useRouter();
+    const [isLoading, setIsLoading] = useState(false);
+
+    const handleLogin = (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsLoading(true);
+        // Simulate API call delay
+        setTimeout(() => {
+            router.push("/dashboard");
+        }, 800);
+    };
+
     return (
         <main className="flex min-h-screen flex-col items-center justify-center p-6 relative overflow-hidden selection:bg-blue-500 selection:text-white">
 
@@ -40,7 +56,7 @@ export default function Login() {
                     </div>
 
                     {/* Form */}
-                    <form className="space-y-6">
+                    <form onSubmit={handleLogin} className="space-y-6">
                         <div className="space-y-2">
                             <label className="text-sm font-medium text-zinc-300 ml-1">Usuário</label>
                             <div className="relative group">
@@ -73,10 +89,11 @@ export default function Login() {
                         </div>
 
                         <button
-                            type="button"
-                            className="w-full py-3.5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-bold text-lg hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2"
+                            type="submit"
+                            disabled={isLoading}
+                            className="w-full py-3.5 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-bold text-lg hover:scale-[1.02] active:scale-[0.98] transition-all shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                         >
-                            Entrar
+                            {isLoading ? "Entrando..." : "Entrar"}
                         </button>
                     </form>
 

@@ -14,6 +14,10 @@
   --font-mono: var(--font-mono);
 }
 
+html {
+  background: #020617;
+}
+
 body {
   background: radial-gradient(circle at top center, #1e3a8a, #0f172a, #020617);
   color: var(--foreground);
