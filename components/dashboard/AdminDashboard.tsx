@@ -39,14 +39,14 @@ export default function AdminDashboard() {
             {/* Mobile Sidebar Overlay */}
             {isMobileMenuOpen && (
                 <div
-                    className="fixed inset-0 bg-black/60 backdrop-blur-sm z-30 md:hidden animate-fade-in"
+                    className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[65] md:hidden animate-fade-in"
                     onClick={() => setIsMobileMenuOpen(false)}
                 />
             )}
 
             {/* Sidebar (Desktop & Mobile) */}
             <aside className={`
-        fixed inset-y-0 left-0 z-40 w-72 bg-[#020617]/90 backdrop-blur-xl border-r border-white/10 transition-transform duration-300 ease-in-out md:translate-x-0 md:static md:flex md:flex-col
+        fixed inset-y-0 left-0 z-[70] w-72 bg-[#020617]/90 backdrop-blur-xl border-r border-white/10 transition-transform duration-300 ease-in-out md:translate-x-0 md:static md:flex md:flex-col
         ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
 
