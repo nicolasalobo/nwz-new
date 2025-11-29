@@ -51,7 +51,7 @@ export default function AdminDashboard() {
       `}>
 
                 {/* Logo Area */}
-                <div className="h-16 flex items-center justify-between px-6 border-b border-white/10">
+                <div className="h-[calc(4rem+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] flex items-center justify-between px-6 border-b border-white/10">
                     <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
                             <span className="font-bold text-white">N</span>
@@ -89,7 +89,7 @@ export default function AdminDashboard() {
                 </nav>
 
                 {/* User Profile / Logout */}
-                <div className="p-4 border-t border-white/10">
+                <div className="p-4 border-t border-white/10 pb-[calc(1rem+env(safe-area-inset-bottom))]">
                     <button className="flex items-center gap-3 w-full p-2 rounded-lg hover:bg-white/5 transition-colors text-zinc-400 hover:text-white">
                         <LogOut size={20} />
                         <span className="font-medium">Sair do Sistema</span>
@@ -102,7 +102,7 @@ export default function AdminDashboard() {
             <div className="flex-1 flex flex-col z-10 overflow-hidden">
 
                 {/* Top Header */}
-                <header className="h-16 border-b border-white/10 bg-white/5 backdrop-blur-xl flex items-center justify-between px-6">
+                <header className="h-[calc(4rem+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] border-b border-white/10 bg-white/5 backdrop-blur-xl flex items-center justify-between px-6">
 
                     {/* Mobile Menu Button */}
                     <button
