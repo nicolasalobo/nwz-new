@@ -3,6 +3,7 @@
 import prisma from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import { getSession } from '@/lib/auth';
+import { Prisma } from '@prisma/client';
 
 export type UserRole = 'nwz' | 'parceiro' | 'afiliado';
 
@@ -84,7 +85,7 @@ export async function createUser(formData: FormData): Promise<{ success: boolean
     const hashedPassword = await bcrypt.hash(password, 10);
 
     try {
-        const newUser = await prisma.$transaction(async (tx) => {
+        const newUser = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
             const user = await tx.user.create({
                 data: {
                     name,
@@ -138,20 +139,10 @@ export async function deleteUser(userId: string): Promise<{ success: boolean }> 
     }
 
     try {
-        // Delete related records first (cascade should handle this but let's be safe if not configured)
-        // Actually Prisma schema handles relations, but we need to be careful.
-        // The schema doesn't specify onDelete: Cascade explicitly for all relations, 
-        // but let's assume standard deletion or rely on Prisma to throw if constraint fails.
-        // We should probably delete profile/affiliate first.
-
-        await prisma.$transaction(async (tx) => {
+        await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
             await tx.partnerProfile.deleteMany({ where: { userId } });
             await tx.affiliateSeller.deleteMany({ where: { userId } });
-            await tx.sale.updateMany({ where: { userId }, data: { userId: null } }); // Detach sales? Or delete?
-            // Actually, deleting a user might be dangerous if they have sales.
-            // For now, let's just try to delete the user. If it fails due to FK, we catch it.
-            // But wait, the seed file deletes everything.
-            // Let's try to delete the user.
+            await tx.sale.updateMany({ where: { userId }, data: { userId: null } });
 
             await tx.user.delete({ where: { id: userId } });
         });
