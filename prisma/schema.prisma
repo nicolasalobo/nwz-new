@@ -1,0 +1,119 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  username  String   @unique
+  password  String
+  role      String   // "admin", "partner", "affiliate"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  sales           Sale[]
+  affiliateSellers AffiliateSeller[]
+  partnerProfile   PartnerProfile?
+}
+
+model PartnerProfile {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id])
+  commission      Float    @default(0) // Percentage
+  totalSales      Float    @default(0)
+  totalCommission Float    @default(0) // Total earned all time
+  commissionBalance Float  @default(0) // Available for withdrawal
+  unitsSold       Int      @default(0) // Total units
+  unitProgress    Int      @default(0) // Progress towards next reward
+  status          String   @default("active")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model AffiliateSeller {
+  id          String   @id @default(uuid())
+  name        String
+  storeName   String?
+  commission  Float    @default(0)
+  sellers     String[] // Array of seller names
+  status      String   @default("active")
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  sales       Sale[]
+}
+
+model Client {
+  id            String   @id @default(uuid())
+  name          String
+  phone         String?
+  totalPurchases Int      @default(0)
+  totalSpent    Float    @default(0)
+  totalDebt     Float    @default(0)
+  totalUnits    Int      @default(0) // For loyalty
+  status        String   @default("active") // "active", "blocked"
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  sales         Sale[]
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  name        String
+  category    String
+  price       Float
+  costPrice   Float
+  stock       Int
+  minStock    Int      @default(5)
+  image       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  saleItems   SaleItem[]
+}
+
+model Sale {
+  id            String   @id @default(uuid())
+  code          String   @unique // e.g., #1234
+  total         Float
+  subtotal      Float
+  discount      Float    @default(0)
+  paymentMethod String   // "pix", "card", "cash", "credit" (a prazo)
+  amountPaid    Float    @default(0)
+  status        String   // "completed", "pending", "open"
+  date          DateTime @default(now())
+  
+  // Relations
+  clientId      String?
+  client        Client?  @relation(fields: [clientId], references: [id])
+  
+  userId        String?
+  user          User?    @relation(fields: [userId], references: [id])
+
+  affiliateSellerId String?
+  affiliateSeller   AffiliateSeller? @relation(fields: [affiliateSellerId], references: [id])
+
+  items         SaleItem[]
+}
+
+model SaleItem {
+  id        String   @id @default(uuid())
+  saleId    String
+  sale      Sale     @relation(fields: [saleId], references: [id])
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Float    // Price at the time of sale
+  total     Float
+}

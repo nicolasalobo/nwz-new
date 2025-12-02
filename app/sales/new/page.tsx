@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import ProductCatalog from "@/components/sales/ProductCatalog";
@@ -8,7 +8,17 @@ import Cart from "@/components/sales/Cart";
 
 export default function NewSalePage() {
     const [cartItems, setCartItems] = useState<any[]>([]);
+    const [products, setProducts] = useState<any[]>([]);
     const [role, setRole] = useState<"admin" | "partner" | "affiliate">("admin");
+
+    useEffect(() => {
+        fetch('/api/products')
+            .then(res => res.json())
+            .then(data => {
+                if (Array.isArray(data)) setProducts(data);
+            })
+            .catch(err => console.error("Failed to fetch products", err));
+    }, []);
 
     const addToCart = (product: any, variant: string) => {
         const newItem = {
@@ -25,10 +35,53 @@ export default function NewSalePage() {
         setCartItems(cartItems.filter(item => item.id !== id));
     };
 
-    const handleCheckout = (data: any) => {
-        console.log("Checkout Data:", data);
-        alert("Venda finalizada! (Ver console para dados)");
-        setCartItems([]);
+    const handleCheckout = async (data: any) => {
+        try {
+            // Transform cart items to API format
+            const items = cartItems.map(item => ({
+                productId: item.productId,
+                quantity: 1, // Cart currently adds individual items, could group them later
+                price: item.price
+            }));
+
+            // Group items by productId for API (optimization)
+            const groupedItems: any[] = [];
+            items.forEach(item => {
+                const existing = groupedItems.find(i => i.productId === item.productId);
+                if (existing) {
+                    existing.quantity += 1;
+                } else {
+                    groupedItems.push({ ...item });
+                }
+            });
+
+            const payload = {
+                items: groupedItems,
+                paymentMethod: data.paymentMethod === "Pix" ? "pix" : data.paymentMethod === "Cartão de Crédito" ? "credit_card" : "credit",
+                discount: data.discountAmount,
+                amountPaid: data.status === "paid" ? data.total : 0, // Simple logic for now
+                // Add client/partner logic here if needed
+            };
+
+            const res = await fetch('/api/sales', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            });
+
+            if (res.ok) {
+                alert("Venda realizada com sucesso!");
+                setCartItems([]);
+                // Refresh products to update stock
+                fetch('/api/products').then(res => res.json()).then(setProducts);
+            } else {
+                const err = await res.json();
+                alert(`Erro ao realizar venda: ${err.error}`);
+            }
+        } catch (error) {
+            console.error("Checkout error", error);
+            alert("Erro ao processar venda.");
+        }
     };
 
     return (
@@ -72,7 +125,7 @@ export default function NewSalePage() {
 
                 {/* Left: Catalog (7 cols) */}
                 <div className="lg:col-span-7 h-full overflow-hidden">
-                    <ProductCatalog onAddToCart={addToCart} />
+                    <ProductCatalog products={products} onAddToCart={addToCart} />
                 </div>
 
                 {/* Right: Cart (5 cols) */}

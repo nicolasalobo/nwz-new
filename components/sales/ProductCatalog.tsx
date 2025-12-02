@@ -4,52 +4,29 @@ import { useState } from "react";
 import { Search, ChevronDown, ChevronUp, Plus } from "lucide-react";
 
 // Mock Data
-const PRODUCTS = [
-    {
-        id: "p1",
-        name: "Pod Descartável v50",
-        price: 80.00,
-        variants: [
-            "Mixed Berries",
-            "Strawberry Kiwi",
-            "Peach Mango Watermelon",
-            "Green Apple",
-            "Watermelon Mix",
-            "Strawberry Watermelon"
-        ]
-    },
-    {
-        id: "p2",
-        name: "Pod Descartável v155",
-        price: 110.00,
-        variants: [
-            "Tropical Açai",
-            "Icy Mint",
-            "Grape Ice",
-            "Blueberry Ice"
-        ]
-    },
-    {
-        id: "p3",
-        name: "Essência Love 66",
-        price: 15.00,
-        variants: [
-            "Padrão"
-        ]
-    }
-];
+
+
+interface Product {
+    id: string;
+    name: string;
+    price: number;
+    category: string;
+    stock: number;
+    image?: string;
+}
 
 interface ProductCatalogProps {
+    products: Product[];
     onAddToCart: (product: any, variant: string) => void;
 }
 
-export default function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
+export default function ProductCatalog({ products, onAddToCart }: ProductCatalogProps) {
     const [searchTerm, setSearchTerm] = useState("");
     const [expandedProduct, setExpandedProduct] = useState<string | null>(null);
 
-    const filteredProducts = PRODUCTS.filter(p =>
+    const filteredProducts = products.filter(p =>
         p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.variants.some(v => v.toLowerCase().includes(searchTerm.toLowerCase()))
+        p.category.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     const toggleExpand = (id: string) => {
@@ -100,20 +77,17 @@ export default function ProductCatalog({ onAddToCart }: ProductCatalogProps) {
                         {/* Variants */}
                         {expandedProduct === product.id && (
                             <div className="border-t border-white/5 bg-black/20 p-2 space-y-1">
-                                {product.variants.map((variant, index) => (
-                                    <button
-                                        key={index}
-                                        onClick={() => onAddToCart(product, variant)}
-                                        className="w-full p-3 rounded-lg flex items-center justify-between hover:bg-blue-600/20 group transition-colors"
-                                    >
-                                        <span className="text-sm text-zinc-300 group-hover:text-white transition-colors">
-                                            {variant}
-                                        </span>
-                                        <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all">
-                                            <Plus size={16} />
-                                        </div>
-                                    </button>
-                                ))}
+                                <button
+                                    onClick={() => onAddToCart(product, "Padrão")}
+                                    className="w-full p-3 rounded-lg flex items-center justify-between hover:bg-blue-600/20 group transition-colors"
+                                >
+                                    <span className="text-sm text-zinc-300 group-hover:text-white transition-colors">
+                                        Padrão
+                                    </span>
+                                    <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all">
+                                        <Plus size={16} />
+                                    </div>
+                                </button>
                             </div>
                         )}
 

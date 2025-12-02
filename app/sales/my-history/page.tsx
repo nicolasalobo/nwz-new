@@ -1,73 +1,58 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ArrowLeft, Search, Filter, Calendar } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import SalesTable from "@/components/sales/SalesTable";
 import SaleDetailsModal from "@/components/sales/SaleDetailsModal";
 
-// Mock Data for a specific Partner (e.g., "Tabacaria Central")
-const MY_SALES = [
-    {
-        id: "1023",
-        date: "26/11/2024",
-        time: "09:45",
-        clientName: "Cliente Final 1",
-        clientType: "Final",
-        registeredBy: "Tabacaria Central",
-        total: 150.00,
-        subtotal: 150.00,
-        discount: 0,
-        status: "paid" as const,
-        paymentMethod: "Pix",
-        amountPaid: 150.00,
-        items: [
-            { name: "Pod Ignite V80 - Watermelon", qty: 1, price: 125.00, total: 125.00 },
-            { name: "Essência Zomo", qty: 2, price: 12.50, total: 25.00 }
-        ]
-    },
-    {
-        id: "1018",
-        date: "22/11/2024",
-        time: "14:20",
-        clientName: "Cliente Final 2",
-        clientType: "Final",
-        registeredBy: "Tabacaria Central",
-        total: 85.00,
-        subtotal: 85.00,
-        discount: 0,
-        status: "paid" as const,
-        paymentMethod: "Cartão de Crédito",
-        amountPaid: 85.00,
-        items: [
-            { name: "Pod Descartável v50 - Grape", qty: 1, price: 85.00, total: 85.00 }
-        ]
-    },
-    {
-        id: "1015",
-        date: "20/11/2024",
-        time: "18:10",
-        clientName: "Cliente Final 3",
-        clientType: "Final",
-        registeredBy: "Tabacaria Central",
-        total: 250.00,
-        subtotal: 250.00,
-        discount: 0,
-        status: "pending" as const,
-        paymentMethod: "A Prazo",
-        amountPaid: 100.00,
-        items: [
-            { name: "Pod Ignite V80 - Mint", qty: 2, price: 125.00, total: 250.00 }
-        ]
-    }
-];
-
 export default function MySalesHistoryPage() {
-    const [sales, setSales] = useState(MY_SALES);
+    const [sales, setSales] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
     const [selectedSale, setSelectedSale] = useState<any | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const router = useRouter();
+
+    useEffect(() => {
+        fetch('/api/sales')
+            .then(res => {
+                if (res.status === 401) {
+                    router.push('/login');
+                    return null;
+                }
+                return res.json();
+            })
+            .then(data => {
+                if (data && Array.isArray(data)) {
+                    // Map API data to UI format
+                    const mappedSales = data.map((sale: any) => ({
+                        id: sale.code ? sale.code.replace('#', '') : sale.id.substring(0, 4),
+                        date: new Date(sale.date).toLocaleDateString('pt-BR'),
+                        time: new Date(sale.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+                        clientName: sale.client?.name || "Cliente Final",
+                        clientType: sale.clientId ? "Final" : "Outro",
+                        registeredBy: sale.user?.name || "Sistema",
+                        total: sale.total,
+                        subtotal: sale.subtotal,
+                        discount: sale.discount,
+                        status: sale.status === 'completed' ? 'paid' : sale.status,
+                        paymentMethod: sale.paymentMethod === 'pix' ? 'Pix' : sale.paymentMethod === 'credit_card' ? 'Cartão de Crédito' : 'A Prazo',
+                        amountPaid: sale.amountPaid,
+                        items: sale.items.map((item: any) => ({
+                            name: item.product?.name || "Produto Removido",
+                            qty: item.quantity,
+                            price: item.price,
+                            total: item.total
+                        }))
+                    }));
+                    setSales(mappedSales);
+                }
+            })
+            .catch(err => console.error("Failed to fetch sales", err));
+    }, [router]);
+
 
     const handleViewDetails = (saleId: string) => {
         const sale = sales.find(s => s.id === saleId);

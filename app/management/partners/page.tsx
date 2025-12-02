@@ -1,50 +1,74 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Users, Search, Filter, MoreVertical, Plus, Gift, DollarSign, ArrowLeft, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 
 // Mock Data
-const INITIAL_PARTNERS = [
-    { id: 1, name: "João Silva", email: "joao@email.com", commissionBalance: 1250.00, unitProgress: 7, totalSales: 45, status: "active" },
-    { id: 2, name: "Maria Oliveira", email: "maria@email.com", commissionBalance: 320.50, unitProgress: 3, totalSales: 13, status: "active" },
-    { id: 3, name: "Pedro Santos", email: "pedro@email.com", commissionBalance: 0.00, unitProgress: 9, totalSales: 29, status: "inactive" },
-];
 
-const AVAILABLE_USERS = [
-    { id: 101, name: "Carlos Souza", email: "carlos@email.com" },
-    { id: 102, name: "Ana Lima", email: "ana@email.com" },
-    { id: 103, name: "Roberto Costa", email: "roberto@email.com" },
-];
 
 export default function PartnersManagementPage() {
-    const [partners, setPartners] = useState(INITIAL_PARTNERS);
+    const [partners, setPartners] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
     const [selectedUserToLink, setSelectedUserToLink] = useState("");
+    const [availableUsers, setAvailableUsers] = useState<any[]>([]);
 
     const filteredPartners = partners.filter(partner =>
         partner.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        partner.email.toLowerCase().includes(searchTerm.toLowerCase())
+        (partner.email && partner.email.toLowerCase().includes(searchTerm.toLowerCase()))
     );
 
-    const handleLinkUser = () => {
+    useEffect(() => {
+        fetchPartners();
+        fetchUsers();
+    }, []);
+
+    const fetchPartners = () => {
+        fetch('/api/partners')
+            .then(res => res.json())
+            .then(data => {
+                if (Array.isArray(data)) setPartners(data);
+            })
+            .catch(err => console.error("Failed to fetch partners", err));
+    };
+
+    const fetchUsers = () => {
+        // We need an endpoint to fetch users who are NOT partners yet
+        // For now, we'll fetch all users and filter client-side or use a dedicated endpoint
+        // Let's assume we use a simple GET /api/users (which we might need to create or use existing)
+        // Since we don't have a dedicated /api/users for this, let's create a quick one or reuse logic
+        // For MVP, let's just fetch from a new endpoint /api/users/available-for-partner
+        fetch('/api/users/available-for-partner')
+            .then(res => res.json())
+            .then(data => {
+                if (Array.isArray(data)) setAvailableUsers(data);
+            })
+            .catch(err => console.error("Failed to fetch users", err));
+    };
+
+    const handleLinkUser = async () => {
         if (!selectedUserToLink) return;
 
-        const user = AVAILABLE_USERS.find(u => u.id.toString() === selectedUserToLink);
-        if (user) {
-            const newPartner = {
-                id: partners.length + 1,
-                name: user.name,
-                email: user.email,
-                commissionBalance: 0,
-                unitProgress: 0,
-                totalSales: 0,
-                status: "active"
-            };
-            setPartners([...partners, newPartner]);
-            setIsLinkModalOpen(false);
-            setSelectedUserToLink("");
+        try {
+            const res = await fetch('/api/partners', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: selectedUserToLink }),
+            });
+
+            if (res.ok) {
+                fetchPartners();
+                fetchUsers(); // Refresh available users
+                setIsLinkModalOpen(false);
+                setSelectedUserToLink("");
+            } else {
+                const err = await res.json();
+                alert(`Erro ao vincular parceiro: ${err.error}`);
+            }
+        } catch (error) {
+            console.error("Error linking partner", error);
+            alert("Erro ao vincular parceiro.");
         }
     };
 
@@ -225,8 +249,8 @@ export default function PartnersManagementPage() {
                                         className="w-full bg-black/20 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-blue-500 transition-colors"
                                     >
                                         <option value="">Selecione um usuário...</option>
-                                        {AVAILABLE_USERS.map(user => (
-                                            <option key={user.id} value={user.id}>{user.name} ({user.email})</option>
+                                        {availableUsers.map(user => (
+                                            <option key={user.id} value={user.id}>{user.name} ({user.username})</option>
                                         ))}
                                     </select>
                                 </div>

@@ -95,17 +95,14 @@ export default function AffiliateModal({ isOpen, onClose, onSave, affiliate }: A
                         <label className="text-xs font-bold text-zinc-500 uppercase">Loja / Unidade</label>
                         <div className="relative">
                             <Store className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={16} />
-                            <select
+                            <input
+                                type="text"
+                                required
                                 value={formData.store}
                                 onChange={(e) => setFormData({ ...formData, store: e.target.value })}
-                                className="w-full bg-black/20 border border-white/10 rounded-lg pl-10 pr-3 py-2 text-white focus:outline-none focus:border-blue-500 transition-colors appearance-none"
-                            >
-                                <option value="">Selecione a Loja...</option>
-                                <option value="Matriz">Matriz - Centro</option>
-                                <option value="Filial Norte">Filial Norte</option>
-                                <option value="Filial Sul">Filial Sul</option>
-                                <option value="Quiosque Shopping">Quiosque Shopping</option>
-                            </select>
+                                className="w-full bg-black/20 border border-white/10 rounded-lg pl-10 pr-3 py-2 text-white focus:outline-none focus:border-blue-500 transition-colors"
+                                placeholder="Ex: Matriz - Centro"
+                            />
                         </div>
                     </div>
 

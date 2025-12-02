@@ -4,32 +4,23 @@ import Link from "next/link";
 interface Sale {
     id: string;
     customer: string;
-    amount: string;
-    status: "completed" | "pending" | "processing";
+    amount: number;
+    status: "completed" | "pending" | "processing" | "open";
     date: string;
 }
 
-const mockSales: Sale[] = [
-    { id: "1", customer: "Maria Silva", amount: "R$ 150,00", status: "completed", date: "Hoje, 14:30" },
-    { id: "2", customer: "João Santos", amount: "R$ 89,90", status: "processing", date: "Hoje, 13:15" },
-    { id: "3", customer: "Ana Oliveira", amount: "R$ 210,50", status: "completed", date: "Hoje, 11:45" },
-    { id: "4", customer: "Pedro Costa", amount: "R$ 45,00", status: "pending", date: "Ontem, 18:20" },
-    { id: "5", customer: "Lucas Pereira", amount: "R$ 120,00", status: "completed", date: "Ontem, 16:10" },
-];
+
 
 interface RecentSalesProps {
     role?: "admin" | "partner" | "affiliate";
+    sales?: Sale[];
 }
 
-export default function RecentSales({ role = "admin" }: RecentSalesProps) {
+export default function RecentSales({ role = "admin", sales = [] }: RecentSalesProps) {
     const historyLink = role === "admin" ? "/sales/history" : "/sales/my-history";
 
-    // Filter mock data based on role to simulate different views
-    const displaySales = role === "admin"
-        ? mockSales
-        : role === "partner"
-            ? [mockSales[0], mockSales[2], mockSales[4]] // Simulate specific user sales
-            : [mockSales[1], mockSales[3]]; // Simulate store sales
+    // Use passed sales or fallback to empty array (mock data removed)
+    const displaySales = sales.length > 0 ? sales : [];
 
     return (
         <div className="w-full max-w-4xl bg-white/5 border border-white/10 rounded-3xl overflow-hidden backdrop-blur-sm">
@@ -58,13 +49,19 @@ export default function RecentSales({ role = "admin" }: RecentSalesProps) {
 
                             <div>
                                 <p className="text-sm font-medium text-white">{sale.customer}</p>
-                                <p className="text-xs text-zinc-500">{sale.date}</p>
+                                <p className="text-xs text-zinc-500">
+                                    {new Date(sale.date).toLocaleDateString('pt-BR')}
+                                </p>
                             </div>
                         </div>
 
                         <div className="flex items-center gap-4 md:gap-8">
                             <div className="text-right">
-                                <p className="text-sm font-bold text-white">{sale.amount}</p>
+                                <p className="text-sm font-bold text-white">
+                                    {typeof sale.amount === 'number'
+                                        ? sale.amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+                                        : sale.amount}
+                                </p>
                                 <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${sale.status === 'completed' ? 'bg-emerald-500/10 text-emerald-400' :
                                     sale.status === 'processing' ? 'bg-blue-500/10 text-blue-400' :
                                         'bg-amber-500/10 text-amber-400'

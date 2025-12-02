@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { ArrowLeft, Plus, Users, Shield, Store, Trash2, Search } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import UserForm from '@/components/admin/UserForm';
 import { getUsers, deleteUser, User } from '@/app/actions/user-actions';
 
@@ -11,10 +12,29 @@ export default function UserManagementPage() {
     const [isCreating, setIsCreating] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const router = useRouter(); // Import useRouter
 
     useEffect(() => {
-        loadUsers();
+        checkAuth();
     }, []);
+
+    async function checkAuth() {
+        try {
+            const res = await fetch('/api/auth/me');
+            if (res.ok) {
+                const data = await res.json();
+                if (data.user.role !== 'admin') {
+                    router.push('/dashboard');
+                    return;
+                }
+                loadUsers();
+            } else {
+                router.push('/login');
+            }
+        } catch (error) {
+            router.push('/login');
+        }
+    }
 
     async function loadUsers() {
         setIsLoading(true);

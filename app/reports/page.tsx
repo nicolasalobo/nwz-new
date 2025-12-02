@@ -1,14 +1,52 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ArrowLeft, Calendar, DollarSign, TrendingUp, Users, ShoppingBag, PieChart, Gift } from "lucide-react";
 import Link from "next/link";
 import MetricCard from "@/components/reports/MetricCard";
 import SalesChart from "@/components/reports/SalesChart";
 
 export default function ReportsPage() {
-    const [role, setRole] = useState<"admin" | "partner" | "affiliate">("admin");
+    const [role, setRole] = useState<"admin" | "partner" | "affiliate" | null>(null);
     const [dateRange, setDateRange] = useState("Últimos 30 dias");
+    const [stats, setStats] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const [sessionRes, statsRes] = await Promise.all([
+                    fetch('/api/auth/session'),
+                    fetch('/api/dashboard/stats')
+                ]);
+
+                if (sessionRes.ok) {
+                    const sessionData = await sessionRes.json();
+                    if (sessionData.user) {
+                        setRole(sessionData.user.role);
+                    }
+                }
+
+                if (statsRes.ok) {
+                    setStats(await statsRes.json());
+                }
+            } catch (error) {
+                console.error("Error fetching data:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, []);
+
+    if (loading) {
+        return (
+            <div className="min-h-screen w-full bg-[#020617] text-white flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen w-full bg-[#020617] text-white flex flex-col">
@@ -23,27 +61,7 @@ export default function ReportsPage() {
                 </div>
 
                 <div className="flex items-center gap-4">
-                    {/* Role Switcher (Demo) */}
-                    <div className="hidden md:flex bg-white/5 rounded-lg p-1 border border-white/5">
-                        <button
-                            onClick={() => setRole("admin")}
-                            className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${role === "admin" ? "bg-blue-600 text-white" : "text-zinc-400 hover:text-white"}`}
-                        >
-                            Admin
-                        </button>
-                        <button
-                            onClick={() => setRole("partner")}
-                            className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${role === "partner" ? "bg-emerald-600 text-white" : "text-zinc-400 hover:text-white"}`}
-                        >
-                            Parceiro
-                        </button>
-                        <button
-                            onClick={() => setRole("affiliate")}
-                            className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${role === "affiliate" ? "bg-purple-600 text-white" : "text-zinc-400 hover:text-white"}`}
-                        >
-                            Afiliado
-                        </button>
-                    </div>
+
 
                     {/* Date Picker Mock */}
                     <button className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-sm font-medium transition-colors">
@@ -86,7 +104,7 @@ export default function ReportsPage() {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                             <MetricCard
                                 label="Faturamento Total"
-                                value="R$ 45.250,00"
+                                value={`R$ ${stats?.totalRevenue?.toFixed(2) || '0.00'}`}
                                 trend="+12.5%"
                                 trendUp={true}
                                 icon={DollarSign}
@@ -94,7 +112,7 @@ export default function ReportsPage() {
                             />
                             <MetricCard
                                 label="Lucro Líquido"
-                                value="R$ 18.400,00"
+                                value={`R$ ${(stats?.totalRevenue * 0.4)?.toFixed(2) || '0.00'}`} // Estimated 40% profit
                                 trend="+8.2%"
                                 trendUp={true}
                                 icon={TrendingUp}
@@ -102,7 +120,7 @@ export default function ReportsPage() {
                             />
                             <MetricCard
                                 label="Total de Pedidos"
-                                value="342"
+                                value={stats?.totalSales || 0}
                                 trend="-2.1%"
                                 trendUp={false}
                                 icon={ShoppingBag}
@@ -110,7 +128,7 @@ export default function ReportsPage() {
                             />
                             <MetricCard
                                 label="Novos Clientes"
-                                value="48"
+                                value={stats?.totalUsers || 0}
                                 trend="+15.3%"
                                 trendUp={true}
                                 icon={Users}
@@ -120,7 +138,10 @@ export default function ReportsPage() {
 
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                             <div className="lg:col-span-2">
-                                <SalesChart />
+                                <SalesChart
+                                    data={stats?.salesByDay?.map((s: any) => s.total) || []}
+                                    labels={stats?.salesByDay?.map((s: any) => s.day) || []}
+                                />
                             </div>
                             <div className="bg-white/5 border border-white/5 rounded-2xl p-6">
                                 <h3 className="text-lg font-bold text-white mb-4">Top Produtos</h3>
@@ -188,7 +209,10 @@ export default function ReportsPage() {
                             />
                         </div>
 
-                        <SalesChart />
+                        <SalesChart
+                            data={stats?.salesByDay?.map((s: any) => s.total) || []}
+                            labels={stats?.salesByDay?.map((s: any) => s.day) || []}
+                        />
                     </>
                 )}
 

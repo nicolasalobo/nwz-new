@@ -40,6 +40,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
+        suppressHydrationWarning
         className={`${inter.variable} ${robotoMono.variable} antialiased bg-black text-white font-sans`}
       >
         {children}

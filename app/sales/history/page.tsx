@@ -1,124 +1,60 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ArrowLeft, Plus, Search, Filter, Calendar } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import SalesTable from "@/components/sales/SalesTable";
 import SaleDetailsModal from "@/components/sales/SaleDetailsModal";
 
 // Mock Data
-const INITIAL_SALES = [
-    {
-        id: "1025",
-        date: "26/11/2024",
-        time: "14:30",
-        clientName: "Carlos Eduardo",
-        clientType: "Final",
-        registeredBy: "Nicolas Lobo",
-        total: 250.00,
-        subtotal: 250.00,
-        discount: 0,
-        status: "pending" as const,
-        paymentMethod: "A Prazo",
-        amountPaid: 80.00,
-        items: [
-            { name: "Pod Ignite V80 - Watermelon", qty: 2, price: 125.00, total: 250.00 }
-        ]
-    },
-    {
-        id: "1024",
-        date: "26/11/2024",
-        time: "10:15",
-        clientName: "João Silva",
-        clientType: "Final",
-        registeredBy: "Nicolas Lobo",
-        total: 185.00,
-        subtotal: 185.00,
-        discount: 0,
-        status: "paid" as const,
-        paymentMethod: "Pix",
-        amountPaid: 185.00,
-        items: [
-            { name: "Pod Ignite V80 - Icy Mint", qty: 1, price: 110.00, total: 110.00 },
-            { name: "Essência Love 66", qty: 2, price: 37.50, total: 75.00 }
-        ]
-    },
-    {
-        id: "1023",
-        date: "26/11/2024",
-        time: "09:45",
-        clientName: "Tabacaria Central",
-        clientType: "Parceiro",
-        registeredBy: "Admin",
-        total: 450.00,
-        subtotal: 500.00,
-        discount: 50.00,
-        status: "open" as const,
-        paymentMethod: "Boleto",
-        amountPaid: 0,
-        items: [
-            { name: "Pod Descartável v50 - Mix", qty: 10, price: 45.00, total: 450.00 }
-        ]
-    },
-    {
-        id: "1022",
-        date: "25/11/2024",
-        time: "16:20",
-        clientName: "Maria Oliveira",
-        clientType: "Final",
-        registeredBy: "Nicolas Lobo",
-        total: 85.00,
-        subtotal: 85.00,
-        discount: 0,
-        status: "paid" as const,
-        paymentMethod: "Cartão de Crédito",
-        amountPaid: 85.00,
-        items: [
-            { name: "Pod Descartável v50 - Grape", qty: 1, price: 85.00, total: 85.00 }
-        ]
-    },
-    {
-        id: "1021",
-        date: "24/11/2024",
-        time: "11:00",
-        clientName: "Pedro Santos",
-        clientType: "Afiliado",
-        registeredBy: "Admin",
-        total: 1200.00,
-        subtotal: 1200.00,
-        discount: 0,
-        status: "paid" as const,
-        paymentMethod: "Pix",
-        amountPaid: 1200.00,
-        items: [
-            { name: "Kit Atacado Essências", qty: 1, price: 1200.00, total: 1200.00 }
-        ]
-    },
-    {
-        id: "1020",
-        date: "23/11/2024",
-        time: "18:50",
-        clientName: "Lucas Pereira",
-        clientType: "Final",
-        registeredBy: "Nicolas Lobo",
-        total: 35.00,
-        subtotal: 35.00,
-        discount: 0,
-        status: "cancelled" as const,
-        paymentMethod: "Dinheiro",
-        amountPaid: 0,
-        items: [
-            { name: "Carvão de Coco 1kg", qty: 1, price: 35.00, total: 35.00 }
-        ]
-    }
-];
+
 
 export default function SalesHistoryPage() {
-    const [sales, setSales] = useState(INITIAL_SALES);
+    const [sales, setSales] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
     const [selectedSale, setSelectedSale] = useState<any | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const router = useRouter();
+
+    useEffect(() => {
+        fetch('/api/sales')
+            .then(res => {
+                if (res.status === 401) {
+                    router.push('/login');
+                    return null;
+                }
+                return res.json();
+            })
+            .then(data => {
+                if (data && Array.isArray(data)) {
+                    // Map API data to UI format
+                    const mappedSales = data.map((sale: any) => ({
+                        id: sale.code ? sale.code.replace('#', '') : sale.id.substring(0, 4), // Use code or short ID
+                        date: new Date(sale.date).toLocaleDateString('pt-BR'),
+                        time: new Date(sale.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+                        clientName: sale.client?.name || "Cliente Final", // Fallback
+                        clientType: sale.clientId ? "Final" : "Outro", // Simplify for now
+                        registeredBy: sale.user?.name || "Sistema",
+                        total: sale.total,
+                        subtotal: sale.subtotal,
+                        discount: sale.discount,
+                        status: sale.status === 'completed' ? 'paid' : sale.status,
+                        paymentMethod: sale.paymentMethod === 'pix' ? 'Pix' : sale.paymentMethod === 'credit_card' ? 'Cartão de Crédito' : 'A Prazo',
+                        amountPaid: sale.amountPaid,
+                        items: sale.items.map((item: any) => ({
+                            name: item.product?.name || "Produto Removido",
+                            qty: item.quantity,
+                            price: item.price,
+                            total: item.total
+                        }))
+                    }));
+                    setSales(mappedSales);
+                }
+            })
+            .catch(err => console.error("Failed to fetch sales", err));
+    }, []);
 
     const handleViewDetails = (saleId: string) => {
         const sale = sales.find(s => s.id === saleId);

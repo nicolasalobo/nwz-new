@@ -1,52 +1,93 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ArrowLeft, Search, Plus, User, Phone, MoreVertical, Edit, Trash2, AlertCircle, ShoppingBag, Gift, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import ClientModal from "@/components/clients/ClientModal";
 
-import { CLIENTS } from "@/app/data/mock";
-
 export default function ClientsPage() {
-    const [clients, setClients] = useState(CLIENTS);
+    const [clients, setClients] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingClient, setEditingClient] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
 
-    const handleSaveClient = (clientData: any) => {
-        if (editingClient) {
-            // Edit
-            setClients(clients.map(c => c.id === editingClient.id ? { ...c, ...clientData } : c));
-        } else {
-            // Add
-            const newClient = {
-                id: Math.random().toString(36).substr(2, 9),
-                ...clientData,
-                totalDebt: 0,
-                totalPurchases: 0,
-                purchaseCount: 0,
-                totalUnits: 0
-            };
-            setClients([...clients, newClient]);
+    const fetchClients = async () => {
+        try {
+            const res = await fetch('/api/clients');
+            if (res.ok) {
+                setClients(await res.json());
+            }
+        } catch (error) {
+            console.error("Error fetching clients:", error);
+        } finally {
+            setLoading(false);
         }
-        setIsModalOpen(false);
-        setEditingClient(null);
     };
 
-    const handleDeleteClient = (id: string) => {
+    useEffect(() => {
+        fetchClients();
+    }, []);
+
+    const handleSaveClient = async (clientData: any) => {
+        try {
+            if (editingClient) {
+                // Edit
+                const res = await fetch(`/api/clients/${editingClient.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(clientData),
+                });
+                if (res.ok) fetchClients();
+            } else {
+                // Add
+                const res = await fetch('/api/clients', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(clientData),
+                });
+                if (res.ok) fetchClients();
+            }
+            setIsModalOpen(false);
+            setEditingClient(null);
+        } catch (error) {
+            console.error("Error saving client:", error);
+            alert("Erro ao salvar cliente.");
+        }
+    };
+
+    const handleDeleteClient = async (id: string) => {
         if (confirm("Tem certeza que deseja excluir este cliente?")) {
-            setClients(clients.filter(c => c.id !== id));
+            try {
+                const res = await fetch(`/api/clients/${id}`, {
+                    method: 'DELETE',
+                });
+                if (res.ok) fetchClients();
+            } catch (error) {
+                console.error("Error deleting client:", error);
+                alert("Erro ao excluir cliente.");
+            }
         }
     };
 
-    const handleRedeemReward = (clientId: string) => {
+    const handleRedeemReward = async (clientId: string) => {
         if (confirm("Confirmar retirada de brinde? Isso descontará 10 unidades do saldo do cliente.")) {
-            setClients(clients.map(c => {
-                if (c.id === clientId && c.totalUnits >= 10) {
-                    return { ...c, totalUnits: c.totalUnits - 10 };
+            const client = clients.find(c => c.id === clientId);
+            if (client && client.totalUnits >= 10) {
+                try {
+                    const res = await fetch(`/api/clients/${clientId}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            ...client,
+                            totalUnits: client.totalUnits - 10
+                        }),
+                    });
+                    if (res.ok) fetchClients();
+                } catch (error) {
+                    console.error("Error redeeming reward:", error);
                 }
-                return c;
-            }));
+            }
         }
     };
 

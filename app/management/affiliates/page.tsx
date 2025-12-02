@@ -1,55 +1,70 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ArrowLeft, Search, Plus, Store, User, Shield, Edit, Trash2, Percent } from "lucide-react";
 import Link from "next/link";
 import AffiliateModal from "@/components/management/AffiliateModal";
 
 // Mock Data
-const INITIAL_AFFILIATES = [
-    {
-        id: "1",
-        name: "Curitipods",
-        store: "Matriz",
-        sellers: ["Alvaro", "Play"],
-        commission: 10,
-        status: "active" as const
-    },
-    {
-        id: "2",
-        name: "Maripods",
-        store: "Filial Norte",
-        sellers: ["Jumble"],
-        commission: 12,
-        status: "active" as const
-    },
-];
+
 
 export default function AffiliatesPage() {
-    const [affiliates, setAffiliates] = useState(INITIAL_AFFILIATES);
+    const [affiliates, setAffiliates] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingAffiliate, setEditingAffiliate] = useState<any>(null);
 
-    const handleSaveAffiliate = (affiliateData: any) => {
-        if (editingAffiliate) {
-            // Edit
-            setAffiliates(affiliates.map(a => a.id === editingAffiliate.id ? { ...a, ...affiliateData } : a));
-        } else {
-            // Add
-            const newAffiliate = {
-                id: Math.random().toString(36).substr(2, 9),
-                ...affiliateData
-            };
-            setAffiliates([...affiliates, newAffiliate]);
-        }
-        setIsModalOpen(false);
-        setEditingAffiliate(null);
+    useEffect(() => {
+        fetchAffiliates();
+    }, []);
+
+    const fetchAffiliates = () => {
+        fetch('/api/affiliates')
+            .then(res => res.json())
+            .then(data => {
+                if (Array.isArray(data)) setAffiliates(data);
+            })
+            .catch(err => console.error("Failed to fetch affiliates", err));
     };
 
-    const handleDeleteAffiliate = (id: string) => {
+    const handleSaveAffiliate = async (affiliateData: any) => {
+        try {
+            if (editingAffiliate) {
+                // Edit
+                const res = await fetch(`/api/affiliates/${editingAffiliate.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(affiliateData),
+                });
+                if (res.ok) fetchAffiliates();
+            } else {
+                // Add
+                const res = await fetch('/api/affiliates', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(affiliateData),
+                });
+                if (res.ok) fetchAffiliates();
+            }
+            setIsModalOpen(false);
+            setEditingAffiliate(null);
+        } catch (error) {
+            console.error("Error saving affiliate", error);
+            alert("Erro ao salvar afiliado.");
+        }
+    };
+
+    const handleDeleteAffiliate = async (id: string) => {
         if (confirm("Tem certeza que deseja excluir este afiliado?")) {
-            setAffiliates(affiliates.filter(a => a.id !== id));
+            try {
+                const res = await fetch(`/api/affiliates/${id}`, {
+                    method: 'DELETE',
+                });
+                if (res.ok) fetchAffiliates();
+            } catch (error) {
+                console.error("Error deleting affiliate", error);
+                alert("Erro ao excluir afiliado.");
+            }
         }
     };
 

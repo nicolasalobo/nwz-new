@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import NewSaleButton from "@/components/ui/NewSaleButton";
 import SalesHistoryButton from "@/components/ui/SalesHistoryButton";
 import ManagementActions from "@/components/ui/ManagementActions";
@@ -26,6 +26,22 @@ import RecentSales from "@/components/dashboard/RecentSales";
 
 export default function AdminDashboard() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [stats, setStats] = useState({
+        totalRevenue: 0,
+        totalSalesCount: 0,
+        recentSales: []
+    });
+
+    useEffect(() => {
+        fetch('/api/dashboard/stats')
+            .then(res => res.json())
+            .then(data => {
+                if (data && !data.error) {
+                    setStats(data);
+                }
+            })
+            .catch(err => console.error("Failed to fetch dashboard stats", err));
+    }, []);
 
     return (
         <div className="flex h-screen w-full bg-[#020617] text-white overflow-hidden selection:bg-blue-500 selection:text-white">
@@ -115,8 +131,10 @@ export default function AdminDashboard() {
 
                     {/* Balance Display */}
                     <div className="flex flex-col items-end mr-4 md:mr-6 ml-auto">
-                        <span className="text-[10px] md:text-xs text-zinc-400 font-medium">Saldo Atual</span>
-                        <span className="text-sm md:text-lg font-bold text-emerald-400">R$ 12.450,00</span>
+                        <span className="text-[10px] md:text-xs text-zinc-400 font-medium">Faturamento Total</span>
+                        <span className="text-sm md:text-lg font-bold text-emerald-400">
+                            {stats.totalRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                        </span>
                     </div>
 
                     {/* Right Actions */}
@@ -143,7 +161,7 @@ export default function AdminDashboard() {
                         </div>
 
                         {/* Recent Sales Section */}
-                        <RecentSales />
+                        <RecentSales sales={stats.recentSales} />
 
                     </div>
                 </main>

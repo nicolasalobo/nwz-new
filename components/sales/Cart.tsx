@@ -18,7 +18,7 @@ interface CartProps {
     role?: "admin" | "partner" | "affiliate";
 }
 
-import { CLIENTS } from "@/app/data/mock";
+
 
 export default function Cart({ items, onRemove, onCheckout, role = "admin" }: CartProps) {
     const [customerType, setCustomerType] = useState<"client" | "partner" | "affiliate">("client");
@@ -59,13 +59,32 @@ export default function Cart({ items, onRemove, onCheckout, role = "admin" }: Ca
         }
     }, [couponCode]);
 
-    // Mock Users for Dropdown
-    const PARTNERS = ["João Silva", "Maria Oliveira", "Pedro Santos"];
-    const AFFILIATES_DATA = {
-        "Curitipods": ["Alvaro", "Play"],
-        "Maripods": ["Jumble"]
-    };
-    const AFFILIATES = Object.keys(AFFILIATES_DATA);
+    const [clients, setClients] = useState<any[]>([]);
+    const [partners, setPartners] = useState<any[]>([]);
+    const [affiliates, setAffiliates] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const [clientsRes, partnersRes, affiliatesRes] = await Promise.all([
+                    fetch('/api/clients'),
+                    fetch('/api/partners'),
+                    fetch('/api/affiliates')
+                ]);
+
+                if (clientsRes.ok) setClients(await clientsRes.json());
+                if (partnersRes.ok) setPartners(await partnersRes.json());
+                if (affiliatesRes.ok) setAffiliates(await affiliatesRes.json());
+            } catch (error) {
+                console.error("Error fetching data:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
+    }, []);
 
     const [benefitType, setBenefitType] = useState<"commission" | "unit">("commission");
     const [selectedSeller, setSelectedSeller] = useState("");
@@ -73,6 +92,12 @@ export default function Cart({ items, onRemove, onCheckout, role = "admin" }: Ca
     useEffect(() => {
         setSelectedSeller("");
     }, [selectedRoleUser]);
+
+    // Helper to get sellers for selected affiliate
+    const getSellersForAffiliate = (affiliateName: string) => {
+        const affiliate = affiliates.find(a => a.name === affiliateName);
+        return affiliate ? affiliate.sellers : [];
+    };
 
     // Calculate Totals
     const subtotal = items.reduce((acc, item) => acc + item.price, 0);
@@ -109,7 +134,7 @@ export default function Cart({ items, onRemove, onCheckout, role = "admin" }: Ca
         });
     };
 
-    const selectedClientDebt = !isNewClient ? (CLIENTS.find(c => c.name === clientName)?.totalDebt || 0) : 0;
+    const selectedClientDebt = !isNewClient ? (clients.find(c => c.name === clientName)?.totalDebt || 0) : 0;
 
     const isCheckoutDisabled =
         items.length === 0 ||
@@ -134,8 +159,15 @@ export default function Cart({ items, onRemove, onCheckout, role = "admin" }: Ca
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
 
+                {/* Loading State */}
+                {loading && (
+                    <div className="text-center py-4 text-zinc-500 text-sm animate-pulse">
+                        Carregando dados...
+                    </div>
+                )}
+
                 {/* Partner Benefit Selector */}
-                {role === "partner" && (
+                {role === "partner" && !loading && (
                     <div className="space-y-3 bg-white/5 p-4 rounded-xl border border-white/10">
                         <label className="text-xs font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-2">
                             <Gift size={14} />
@@ -212,8 +244,8 @@ export default function Cart({ items, onRemove, onCheckout, role = "admin" }: Ca
                                 >
                                     <option value="">Selecione o {customerType === "partner" ? "Parceiro" : "Afiliado"}...</option>
                                     {customerType === "partner"
-                                        ? PARTNERS.map(p => <option key={p} value={p}>{p}</option>)
-                                        : AFFILIATES.map(a => <option key={a} value={a}>{a}</option>)
+                                        ? partners.map(p => <option key={p.id} value={p.user.username}>{p.user.username}</option>)
+                                        : affiliates.map(a => <option key={a.id} value={a.name}>{a.name}</option>)
                                     }
                                 </select>
 
@@ -225,7 +257,7 @@ export default function Cart({ items, onRemove, onCheckout, role = "admin" }: Ca
                                         className="w-full bg-black/20 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-blue-500 transition-colors animate-in fade-in slide-in-from-top-2"
                                     >
                                         <option value="">Selecione o Vendedor...</option>
-                                        {AFFILIATES_DATA[selectedRoleUser as keyof typeof AFFILIATES_DATA]?.map(seller => (
+                                        {getSellersForAffiliate(selectedRoleUser).map((seller: string) => (
                                             <option key={seller} value={seller}>{seller}</option>
                                         ))}
                                     </select>
@@ -246,7 +278,7 @@ export default function Cart({ items, onRemove, onCheckout, role = "admin" }: Ca
                                 className="w-full bg-black/20 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-blue-500 transition-colors"
                             >
                                 <option value="">Selecione o Afiliado...</option>
-                                {AFFILIATES.map(a => <option key={a} value={a}>{a}</option>)}
+                                {affiliates.map(a => <option key={a.id} value={a.name}>{a.name}</option>)}
                             </select>
 
                             {selectedRoleUser && (
@@ -256,7 +288,7 @@ export default function Cart({ items, onRemove, onCheckout, role = "admin" }: Ca
                                     className="w-full bg-black/20 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-blue-500 transition-colors animate-in fade-in slide-in-from-top-2"
                                 >
                                     <option value="">Selecione o Vendedor...</option>
-                                    {AFFILIATES_DATA[selectedRoleUser as keyof typeof AFFILIATES_DATA]?.map(seller => (
+                                    {getSellersForAffiliate(selectedRoleUser).map((seller: string) => (
                                         <option key={seller} value={seller}>{seller}</option>
                                     ))}
                                 </select>
@@ -296,17 +328,12 @@ export default function Cart({ items, onRemove, onCheckout, role = "admin" }: Ca
                                 onChange={(e) => {
                                     const name = e.target.value;
                                     setClientName(name);
-                                    // Check debt
-                                    const client = CLIENTS.find(c => c.name === name);
-                                    if (client && client.totalDebt > 0) {
-                                        // Logic handled in render for blocking
-                                    }
                                 }}
-                                className={`w-full bg-black/20 border rounded-xl p-3 text-white focus:outline-none transition-colors ${CLIENTS.find(c => c.name === clientName)?.totalDebt ? 'border-red-500/50' : 'border-white/10 focus:border-blue-500'
+                                className={`w-full bg-black/20 border rounded-xl p-3 text-white focus:outline-none transition-colors ${clients.find(c => c.name === clientName)?.totalDebt ? 'border-red-500/50' : 'border-white/10 focus:border-blue-500'
                                     }`}
                             >
                                 <option value="">Selecione o Cliente...</option>
-                                {CLIENTS.map(client => (
+                                {clients.map(client => (
                                     <option key={client.id} value={client.name}>
                                         {client.name} {client.totalDebt > 0 ? `(Dívida: R$ ${client.totalDebt.toFixed(2)})` : ""}
                                     </option>
@@ -315,7 +342,7 @@ export default function Cart({ items, onRemove, onCheckout, role = "admin" }: Ca
                         )}
 
                         {/* Debt Warning (Only for Existing Clients) */}
-                        {!isNewClient && CLIENTS.find(c => c.name === clientName)?.totalDebt ? (
+                        {!isNewClient && clients.find(c => c.name === clientName)?.totalDebt ? (
                             <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 flex items-center gap-3 animate-in slide-in-from-top-2">
                                 <div className="p-2 bg-red-500/20 rounded-full text-red-400">
                                     <Banknote size={16} />
@@ -323,7 +350,7 @@ export default function Cart({ items, onRemove, onCheckout, role = "admin" }: Ca
                                 <div>
                                     <p className="text-sm font-bold text-red-400">Venda Bloqueada</p>
                                     <p className="text-xs text-red-300/80">
-                                        Cliente possui débitos pendentes de R$ {CLIENTS.find(c => c.name === clientName)?.totalDebt.toFixed(2)}.
+                                        Cliente possui débitos pendentes de R$ {clients.find(c => c.name === clientName)?.totalDebt.toFixed(2)}.
                                     </p>
                                 </div>
                             </div>

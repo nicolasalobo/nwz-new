@@ -10,7 +10,7 @@ import {
     FileText
 } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import NewSaleButton from "@/components/ui/NewSaleButton";
 import CopyCatalogButton from "@/components/ui/CopyCatalogButton";
 import SalesHistoryButton from "@/components/ui/SalesHistoryButton";
@@ -18,6 +18,22 @@ import RecentSales from "@/components/dashboard/RecentSales";
 
 export default function PartnerDashboard() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [stats, setStats] = useState({
+        totalRevenue: 0,
+        totalSalesCount: 0,
+        recentSales: []
+    });
+
+    useEffect(() => {
+        fetch('/api/dashboard/stats')
+            .then(res => res.json())
+            .then(data => {
+                if (data && !data.error) {
+                    setStats(data);
+                }
+            })
+            .catch(err => console.error("Failed to fetch dashboard stats", err));
+    }, []);
 
     return (
         <div className="min-h-screen bg-[#020617] text-white flex font-sans selection:bg-blue-500/30">
@@ -80,13 +96,17 @@ export default function PartnerDashboard() {
                         {/* My Balance */}
                         <div className="flex flex-col items-end mr-4">
                             <span className="text-xs text-zinc-400 font-medium uppercase tracking-wider">Meu Saldo</span>
-                            <span className="text-xl font-bold text-emerald-400">R$ 1.250,00</span>
+                            <span className="text-xl font-bold text-emerald-400">
+                                {stats.totalRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                            </span>
                         </div>
 
                         {/* My Sales Count */}
                         <Link href="/sales/my-history" className="flex flex-col items-end group cursor-pointer">
                             <span className="text-xs text-zinc-400 font-medium uppercase tracking-wider group-hover:text-blue-400 transition-colors">Minhas Vendas</span>
-                            <span className="text-xl font-bold text-white group-hover:text-blue-400 transition-colors">42 Unid.</span>
+                            <span className="text-xl font-bold text-white group-hover:text-blue-400 transition-colors">
+                                {stats.totalSalesCount} Unid.
+                            </span>
                         </Link>
 
                         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center text-sm font-bold border-2 border-[#020617] ml-4">
@@ -114,7 +134,7 @@ export default function PartnerDashboard() {
                         </div>
 
                         {/* Recent Sales */}
-                        <RecentSales role="partner" />
+                        <RecentSales role="partner" sales={stats.recentSales} />
 
                     </div>
                 </div>

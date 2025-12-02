@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ArrowLeft, Plus, Search, Upload, Layers } from "lucide-react";
 import Link from "next/link";
 import StockTable from "@/components/management/StockTable";
@@ -9,14 +9,7 @@ import BulkImportModal from "@/components/management/BulkImportModal";
 import CategoryModal from "@/components/management/CategoryModal";
 
 // Mock Data
-const INITIAL_PRODUCTS = [
-    { id: "1", name: "Pod Descartável v50", category: "Pod Descartável", price: 85.00, stock: 45, minStock: 10 },
-    { id: "2", name: "Essência Love 66", category: "Essência", price: 18.00, stock: 120, minStock: 20 },
-    { id: "3", name: "Carvão de Coco 1kg", category: "Carvão", price: 35.00, stock: 8, minStock: 15 },
-    { id: "4", name: "Alumínio Predator", category: "Acessórios", price: 12.00, stock: 50, minStock: 10 },
-    { id: "5", name: "Pod Ignite V80", category: "Pod Descartável", price: 110.00, stock: 0, minStock: 5 },
-];
-
+// Mock Data
 const INITIAL_CATEGORIES = [
     "Pod Descartável",
     "Essência",
@@ -25,8 +18,9 @@ const INITIAL_CATEGORIES = [
 ];
 
 export default function StockPage() {
-    const [products, setProducts] = useState(INITIAL_PRODUCTS);
+    const [products, setProducts] = useState<any[]>([]);
     const [categories, setCategories] = useState(INITIAL_CATEGORIES);
+    const [isLoading, setIsLoading] = useState(true);
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -34,6 +28,28 @@ export default function StockPage() {
 
     const [editingProduct, setEditingProduct] = useState<any | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
+
+    // Fetch Products
+    const fetchProducts = async () => {
+        try {
+            const res = await fetch('/api/products');
+            const data = await res.json();
+            if (Array.isArray(data)) {
+                setProducts(data);
+                // Extract unique categories
+                const uniqueCategories = Array.from(new Set([...INITIAL_CATEGORIES, ...data.map((p: any) => p.category)]));
+                setCategories(uniqueCategories);
+            }
+        } catch (error) {
+            console.error("Failed to fetch products", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchProducts();
+    }, []);
 
     const handleAddProduct = () => {
         setEditingProduct(null);
@@ -45,54 +61,86 @@ export default function StockPage() {
         setIsModalOpen(true);
     };
 
-    const handleDeleteProduct = (id: string) => {
+    const handleDeleteProduct = async (id: string) => {
         if (confirm("Tem certeza que deseja excluir este produto?")) {
-            setProducts(products.filter(p => p.id !== id));
-        }
-    };
-
-    const handleSaveProduct = (productData: any) => {
-        if (editingProduct) {
-            // Edit
-            setProducts(products.map(p => p.id === editingProduct.id ? { ...productData, id: editingProduct.id } : p));
-        } else {
-            // Add
-            const newProduct = {
-                ...productData,
-                id: Math.random().toString(36).substr(2, 9)
-            };
-            setProducts([...products, newProduct]);
-        }
-        setIsModalOpen(false);
-    };
-
-    const handleImport = (items: { name: string; qty: number; category: string; price: number }[]) => {
-        const newProducts = [...products];
-
-        items.forEach(item => {
-            // Check if product already exists (simple name match)
-            const existingIndex = newProducts.findIndex(p => p.name.toLowerCase() === item.name.toLowerCase());
-
-            if (existingIndex >= 0) {
-                // Update stock
-                newProducts[existingIndex] = {
-                    ...newProducts[existingIndex],
-                    stock: newProducts[existingIndex].stock + item.qty
-                };
-            } else {
-                // Create new product
-                newProducts.push({
-                    id: Math.random().toString(36).substr(2, 9),
-                    name: item.name,
-                    category: item.category,
-                    price: item.price,
-                    stock: item.qty,
-                    minStock: 5 // Default min stock
-                });
+            try {
+                const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
+                if (res.ok) {
+                    fetchProducts();
+                } else {
+                    alert("Erro ao excluir produto");
+                }
+            } catch (error) {
+                console.error("Error deleting product", error);
             }
-        });
+        }
+    };
 
-        setProducts(newProducts);
+    const handleSaveProduct = async (productData: any) => {
+        try {
+            if (editingProduct) {
+                // Edit
+                const res = await fetch(`/api/products/${editingProduct.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(productData),
+                });
+                if (!res.ok) throw new Error("Failed to update");
+            } else {
+                // Add
+                const res = await fetch('/api/products', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(productData),
+                });
+                if (!res.ok) throw new Error("Failed to create");
+            }
+            fetchProducts();
+            setIsModalOpen(false);
+        } catch (error) {
+            console.error("Error saving product", error);
+            alert("Erro ao salvar produto");
+        }
+    };
+
+    const handleImport = async (items: { name: string; qty: number; category: string; price: number }[]) => {
+        setIsLoading(true);
+        try {
+            for (const item of items) {
+                // Check if exists locally to decide (optimization) or just check backend?
+                // For MVP, simple check against current loaded products
+                const existing = products.find(p => p.name.toLowerCase() === item.name.toLowerCase());
+
+                if (existing) {
+                    // Update stock
+                    await fetch(`/api/products/${existing.id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ ...existing, stock: existing.stock + item.qty }),
+                    });
+                } else {
+                    // Create
+                    await fetch('/api/products', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            name: item.name,
+                            category: item.category,
+                            price: item.price,
+                            stock: item.qty,
+                            minStock: 5
+                        }),
+                    });
+                }
+            }
+            fetchProducts();
+            setIsImportModalOpen(false);
+        } catch (error) {
+            console.error("Import error", error);
+            alert("Erro na importação");
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleAddCategory = (category: string) => {
