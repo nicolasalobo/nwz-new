@@ -1,0 +1,224 @@
+{
+    "info": {
+        "name": "NWZ System",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "https://nwz-new.vercel.app/api",
+            "type": "string"
+        }
+    ],
+    "item": [
+        {
+            "name": "Auth",
+            "item": [
+                {
+                    "name": "Login",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"username\": \"nwolfyz\",\n    \"password\": \"2002\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/login",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "login"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Me (Session Check)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/me",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "me"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Dashboard",
+            "item": [
+                {
+                    "name": "Stats",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/dashboard/stats",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "dashboard",
+                                "stats"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Management",
+            "item": [
+                {
+                    "name": "Products",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/products",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "products"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Product (Admin Only)",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"name\": \"Produto Teste\",\n    \"category\": \"baterias\",\n    \"price\": 100.00,\n    \"costPrice\": 50.00,\n    \"stock\": 10,\n    \"minStock\": 5\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/products",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "products"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Affiliates",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/affiliates",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "affiliates"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Partners",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/partners",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "partners"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Clients",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/clients",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "clients"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Sales",
+            "item": [
+                {
+                    "name": "History",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/sales",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "sales"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "New Sale",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"items\": [\n        { \"productId\": \"UUID_DO_PRODUTO\", \"quantity\": 1 }\n    ],\n    \"paymentMethod\": \"pix\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/sales",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "sales"
+                            ]
+                        }
+                    }
+                }
+            ]
+        }
+    ]
+}

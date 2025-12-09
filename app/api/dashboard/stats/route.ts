@@ -9,8 +9,8 @@ export async function GET() {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const role = session.user.role;
-        const userId = session.user.id;
+        const role = session.role;
+        const userId = session.id;
 
         // --- ADMIN LOGIC ---
         if (role === 'admin') {
