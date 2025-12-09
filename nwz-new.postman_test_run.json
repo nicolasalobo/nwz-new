@@ -1,0 +1,242 @@
+{
+	"id": "effba54f-4789-46d5-a7df-aea6c6c9bbb8",
+	"name": "nwz-new",
+	"timestamp": "2025-12-09T14:30:47.231Z",
+	"collection_id": "49122767-fa3073d2-1120-4d05-ab14-cd545090147b",
+	"folder_id": 0,
+	"environment_id": "0",
+	"totalPass": 0,
+	"delay": 0,
+	"persist": true,
+	"status": "finished",
+	"startedAt": "2025-12-09T14:30:41.087Z",
+	"totalFail": 0,
+	"results": [
+		{
+			"id": "94ab9345-5315-4bf2-8d17-6fcdb95dab34",
+			"name": "login",
+			"url": "nwz-new.vercel.app/api/login",
+			"time": 1677,
+			"responseCode": {
+				"code": 405,
+				"name": "Method Not Allowed"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				1677
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "9ce300bd-59e7-4eba-9913-ca326f8aa4f7",
+			"name": "affiliates",
+			"url": "nwz-new.vercel.app/api/affiliates",
+			"time": 497,
+			"responseCode": {
+				"code": 401,
+				"name": "Unauthorized"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				497
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "ac8845b2-cf1d-4bc8-aea8-ef90491ebe42",
+			"name": "clients",
+			"url": "nwz-new.vercel.app/api/clients",
+			"time": 343,
+			"responseCode": {
+				"code": 401,
+				"name": "Unauthorized"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				343
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "fdc64486-a8e0-42b7-9eb7-8a9ac6aa0519",
+			"name": "debug-env",
+			"url": "nwz-new.vercel.app/api/debug-env",
+			"time": 808,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				808
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "cef41dc7-7375-4bc5-bdc0-a8f433207706",
+			"name": "partners",
+			"url": "nwz-new.vercel.app/api/partners",
+			"time": 417,
+			"responseCode": {
+				"code": 401,
+				"name": "Unauthorized"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				417
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "2b561fd3-0e3f-4c7d-8fd1-83f9fa6254ca",
+			"name": "sales",
+			"url": "nwz-new.vercel.app/api/sales",
+			"time": 388,
+			"responseCode": {
+				"code": 401,
+				"name": "Unauthorized"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				388
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "34be0009-60b2-422e-a7f0-936326604703",
+			"name": "auth",
+			"url": "nwz-new.vercel.app/api/auth",
+			"time": 232,
+			"responseCode": {
+				"code": 404,
+				"name": "Not Found"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				232
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "8651395c-5aca-4ba7-b9ab-3d4cd81f3745",
+			"name": "dashboard",
+			"url": "nwz-new.vercel.app/api/dashboard",
+			"time": 378,
+			"responseCode": {
+				"code": 404,
+				"name": "Not Found"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				378
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "c1357519-d842-4f13-ab30-5558719a1315",
+			"name": "products",
+			"url": "nwz-new.vercel.app/api/products",
+			"time": 451,
+			"responseCode": {
+				"code": 200,
+				"name": "OK"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				451
+			],
+			"allTests": [
+				{}
+			]
+		},
+		{
+			"id": "b9b3eb3b-1a64-49cb-8170-278db6be94fa",
+			"name": "users",
+			"url": "nwz-new.vercel.app/api/users",
+			"time": 191,
+			"responseCode": {
+				"code": 404,
+				"name": "Not Found"
+			},
+			"tests": {},
+			"testPassFailCounts": {},
+			"times": [
+				191
+			],
+			"allTests": [
+				{}
+			]
+		}
+	],
+	"count": 1,
+	"totalTime": 5382,
+	"collection": {
+		"requests": [
+			{
+				"id": "94ab9345-5315-4bf2-8d17-6fcdb95dab34",
+				"method": "GET"
+			},
+			{
+				"id": "9ce300bd-59e7-4eba-9913-ca326f8aa4f7",
+				"method": "GET"
+			},
+			{
+				"id": "ac8845b2-cf1d-4bc8-aea8-ef90491ebe42",
+				"method": "GET"
+			},
+			{
+				"id": "fdc64486-a8e0-42b7-9eb7-8a9ac6aa0519",
+				"method": "GET"
+			},
+			{
+				"id": "cef41dc7-7375-4bc5-bdc0-a8f433207706",
+				"method": "GET"
+			},
+			{
+				"id": "2b561fd3-0e3f-4c7d-8fd1-83f9fa6254ca",
+				"method": "GET"
+			},
+			{
+				"id": "34be0009-60b2-422e-a7f0-936326604703",
+				"method": "GET"
+			},
+			{
+				"id": "8651395c-5aca-4ba7-b9ab-3d4cd81f3745",
+				"method": "GET"
+			},
+			{
+				"id": "c1357519-d842-4f13-ab30-5558719a1315",
+				"method": "GET"
+			},
+			{
+				"id": "b9b3eb3b-1a64-49cb-8170-278db6be94fa",
+				"method": "GET"
+			}
+		]
+	}
+}
