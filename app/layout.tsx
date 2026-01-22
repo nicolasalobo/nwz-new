@@ -12,14 +12,19 @@ const robotoMono = Roboto_Mono({
   subsets: ["latin"],
 });
 
+const isDev = process.env.NEXT_PUBLIC_APP_ENV === "development";
+
 export const metadata: Metadata = {
-  title: "NWZ & CO.",
+  title: isDev ? "NWZ Dev" : "NWZ & CO.",
   description: "NWZ Shop System",
-  manifest: "/manifest.json",
+  icons: {
+    icon: isDev ? "/logo-dev.jpg" : "/logo.jpg",
+    apple: isDev ? "/logo-dev.jpg" : "/logo.jpg",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "NWZ & CO.",
+    title: isDev ? "NWZ Dev" : "NWZ & CO.",
   },
 };
 
